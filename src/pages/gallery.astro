@@ -1,0 +1,165 @@
+---
+// src/pages/gallery.astro
+import Layout from "../layouts/Layout.astro";
+import { createClient } from "microcms-js-sdk";
+import type { MicroCMSListResponse } from "microcms-js-sdk";
+
+// ▼ ギャラリーの設計図
+type Gallery = {
+    id: string;
+    title: string;
+    date: string;
+    isNew: boolean;
+    images: any[]; // 詳細は詳細ページで使うので一旦 any
+};
+
+// ▼ MicroCMSに接続
+const client = createClient({
+    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+    apiKey: import.meta.env.MICROCMS_API_KEY,
+});
+
+// ▼ 全件取得（日付が新しい順）
+const response = await client.get<MicroCMSListResponse<Gallery>>({
+    endpoint: "galleries",
+    queries: { limit: 100, orders: "-date" },
+});
+
+// ================================================
+// ★ここが「柔軟な脳」ポイント！
+// 取得したデータを「年度ごと」にグループ分けする処理
+// ================================================
+const groupedGalleries: Record<number, Gallery[]> = {};
+
+response.contents.forEach((gallery) => {
+    const d = new Date(gallery.date);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1; // getMonthは0始まりなので+1
+
+    // 3月までは「去年の年度」扱いにする（例: 2025年3月 → 2024年度）
+    const fiscalYear = month < 4 ? year - 1 : year;
+
+    // まだその年度の箱がなければ作る
+    if (!groupedGalleries[fiscalYear]) {
+        groupedGalleries[fiscalYear] = [];
+    }
+    // 箱に入れる
+    groupedGalleries[fiscalYear].push(gallery);
+});
+
+// 年度を新しい順（降順）に並び替えるキーのリスト
+// 例: ["2025", "2024", ...]
+const sortedYears = Object.keys(groupedGalleries)
+    .map(Number)
+    .sort((a, b) => b - a);
+
+// 日付フォーマット関数 (例: 2025/08/03)
+const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+};
+---
+
+<Layout title="GALLERY">
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <h2>
+            <span class="js_typing">Modern Folk Song Club</span><br /><span
+                class="js_typing">Information</span>
+        </h2>
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar"
+                            ><svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                ><path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path></svg
+                            ></a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja"
+                            ><img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            /></a>
+                    </li>
+                </ul>
+            </dd>
+        </dl>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service1">
+            <h2 class="js_typing">GALLERY</h2>
+            <section class="details-wrapper">
+                <div class="corner-title">
+                    <ul id="gallery" class="gnavi">
+                        {/* 年度ごとにループ処理 */}
+                        {
+                            sortedYears.map((year) => (
+                                <>
+                                    {/* 年度の見出し */}
+                                    <h3 class="js_typing">{year}年度</h3>
+
+                                    {/* その年度の記事をループ処理 */}
+                                    {groupedGalleries[year].map((gallery) => (
+                                        <li>
+                                            {/* New!マーク（isNewがtrueの時だけ表示） */}
+                                            {gallery.isNew && (
+                                                <div class="new">
+                                                    <p>New!</p>
+                                                </div>
+                                            )}
+
+                                            {/* 詳細ページへのリンク */}
+                                            {/* 今後作る詳細ページ /gallery/記事ID に飛ぶようにしています */}
+                                            <a href={`/gallery/${gallery.id}`}>
+                                                <div class="title1">
+                                                    <h3>
+                                                        {formatDate(
+                                                            gallery.date,
+                                                        )}
+                                                        　{gallery.title}
+                                                    </h3>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    ))}
+                                </>
+                            ))
+                        }
+                    </ul>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <style>
+        /* CSSは main.css があるので基本不要ですが、
+         Astroで動的に生成する部分の微調整を入れます */
+
+        .new {
+            /* もし位置がずれるようならここで調整 */
+        }
+
+        /* リンクの文字色などが変わらないように */
+        .title1 h3 {
+            color: inherit;
+        }
+    </style>
+</Layout>

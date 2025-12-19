@@ -1,0 +1,449 @@
+---
+// src/pages/schedule.astro
+import Layout from "../layouts/Layout.astro";
+import { createClient } from "microcms-js-sdk";
+import type { MicroCMSListResponse } from "microcms-js-sdk";
+
+// ▼ スケジュールの設計図
+type Schedule = {
+    id: string;
+    title: string;
+    month: any;
+    type: any; // ★どんな形式(配列/文字)でも受け取れるように変更
+    timing?: string;
+    archives?: string;
+};
+
+// ▼ MicroCMSに接続
+const client = createClient({
+    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+    apiKey: import.meta.env.MICROCMS_API_KEY,
+});
+
+// ▼ データを全件取得
+const response = await client.get<MicroCMSListResponse<Schedule>>({
+    endpoint: "schedules", // ★もしAPIのエンドポイント名が違う(例: schedule)ならここを直してください
+    queries: { limit: 100 },
+});
+
+// ★デバッグ用：データが取れているかターミナルに表示します
+console.log("--- Schedule Debug Log ---");
+console.log(`取得件数: ${response.contents.length}件`);
+if (response.contents.length > 0) {
+    const first = response.contents[0];
+    console.log(
+        `最初のデータの例 -> タイトル:${first.title}, 月:${first.month}, 区分:${first.type}`,
+    );
+} else {
+    console.log("データが0件です。MicroCMSで「公開」ボタンを押しましたか？");
+}
+console.log("--------------------------");
+
+// ▼ 年度順の月リスト
+const months = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
+
+// ▼ 指定した月・区分のイベントを探す便利関数
+const getEvents = (targetMonth: number, typeCode: "internal" | "external") => {
+    return response.contents.filter((event) => {
+        // 1. 月(month)の処理
+        const eventMonthStr = Array.isArray(event.month)
+            ? event.month[0]
+            : event.month;
+        const eventMonth = parseInt(
+            String(eventMonthStr).replace(/[^0-9]/g, ""),
+            10,
+        );
+
+        // 2. 区分(type)の処理：ここを強化！
+        // 配列なら中身を取り出し、文字ならそのまま使う
+        const rawType = Array.isArray(event.type) ? event.type[0] : event.type;
+
+        // 文字列にしてチェック（念のため）
+        const typeStr = String(rawType);
+
+        // ★ここが修正ポイント：「internal」でも「学内」でもOKにする
+        let isMatch = false;
+        if (typeCode === "internal") {
+            // 学内を探す場合: "internal" または "学内" が含まれていればOK
+            if (typeStr.includes("internal") || typeStr.includes("学内")) {
+                isMatch = true;
+            }
+        } else {
+            // 渉外を探す場合: "external" または "渉外" が含まれていればOK
+            if (typeStr.includes("external") || typeStr.includes("渉外")) {
+                isMatch = true;
+            }
+        }
+
+        return eventMonth === targetMonth && isMatch;
+    });
+};
+---
+
+<Layout title="SCHEDULE">
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <h2>
+            <span class="js_typing">Modern Folk Song Club</span><br /><span
+                class="js_typing">Information</span
+            >
+        </h2>
+
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar"
+                            ><svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                ><path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path></svg
+                            ></a
+                        >
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja"
+                            ><img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            /></a
+                        >
+                    </li>
+                </ul>
+            </dd>
+        </dl>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main>
+        <section>
+            <h2 class="js_typing" id="service">Schedule</h2>
+
+            <table class="table">
+                <tbody class="accordion-area">
+                    <tr>
+                        <th>学内</th>
+                        <th></th>
+                        <th>渉外</th>
+                    </tr>
+
+                    {
+                        months.map((month) => {
+                            const internalEvents = getEvents(month, "internal");
+                            const externalEvents = getEvents(month, "external");
+
+                            // イベントがなくても行を表示する
+                            return (
+                                <tr>
+                                    {/* --- 学内イベント --- */}
+                                    <td>
+                                        {internalEvents.map((event) => (
+                                            <div class="event-item">
+                                                {event.timing && (
+                                                    <span class="timing">
+                                                        {event.timing}
+                                                    </span>
+                                                )}
+                                                <section>
+                                                    <p class="title3">
+                                                        {event.title}
+                                                    </p>
+                                                    <div class="box3">
+                                                        {event.archives ? (
+                                                            <div
+                                                                class="archive-links"
+                                                                set:html={
+                                                                    event.archives
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            <p>
+                                                                <small>
+                                                                    詳細情報なし
+                                                                </small>
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </section>
+                                            </div>
+                                        ))}
+                                    </td>
+
+                                    {/* --- 月 --- */}
+                                    <th>{month}月</th>
+
+                                    {/* --- 渉外イベント --- */}
+                                    <td>
+                                        {externalEvents.map((event) => (
+                                            <div class="event-item">
+                                                {event.timing && (
+                                                    <span class="timing">
+                                                        {event.timing}
+                                                    </span>
+                                                )}
+                                                <section>
+                                                    <p class="title3">
+                                                        {event.title}
+                                                    </p>
+                                                    <div class="box3">
+                                                        {event.archives ? (
+                                                            <div
+                                                                class="archive-links"
+                                                                set:html={
+                                                                    event.archives
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            <p>
+                                                                <small>
+                                                                    詳細情報なし
+                                                                </small>
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </section>
+                                            </div>
+                                        ))}
+                                    </td>
+                                </tr>
+                            );
+                        })
+                    }
+                </tbody>
+            </table>
+            <br /><br />
+        </section>
+    </main>
+
+    <style>
+        /* =========================================
+       ★色設定（ここがミソ！）
+       ========================================= */
+        :root {
+            /* デフォルト（ダークモード用）の色：赤 */
+            --theme-color: #b22222;
+            --card-bg: rgba(0, 0, 0, 0.3);
+            --text-main: #fff;
+        }
+
+        /* ライトモード時の上書き設定：青 */
+        /* ※ bodyタグに 'light-mode' クラスがつくと色が切り替わります */
+        :global(body.light-mode) {
+            --theme-color: #0056b3; /* 濃いめの青 */
+            --card-bg: rgba(255, 255, 255, 0.8); /* カードを白っぽく */
+            --text-main: #333; /* 文字を黒っぽく */
+        }
+
+        /* =========================================
+       構造・レイアウト
+       ========================================= */
+
+        .table {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            color: var(--text-main); /* 文字色も変数に対応 */
+        }
+
+        .table th,
+        .table td {
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        /* 真ん中の「月」（PC表示） */
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            width: 60px;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+            /* ★重要：ここで変数を使います！ */
+            color: var(--theme-color);
+        }
+
+        /* 左右の列 */
+        .table td:first-child,
+        .table td:last-child {
+            width: calc(50% - 30px);
+        }
+
+        /* =========================================
+       アコーディオンパーツ
+       ========================================= */
+
+        .event-item {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .title3 {
+            position: relative;
+            cursor: pointer;
+            padding: 5px 0 5px 20px;
+        }
+
+        /* ＋－のアイコン */
+        .title3::before,
+        .title3::after {
+            content: "";
+            position: absolute;
+            top: 12px;
+            left: 0;
+            width: 12px;
+            height: 1px;
+            background-color: var(
+                --text-main
+            ); /* アイコンの色も文字色に合わせる */
+            transition: transform 0.3s;
+        }
+
+        .title3::after {
+            transform: rotate(90deg);
+        }
+
+        .title3.close::after {
+            transform: rotate(0deg);
+        }
+
+        .box3 {
+            display: none;
+            padding: 10px 0 10px 10px;
+        }
+
+        .timing {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        /* URL改行設定 */
+        .archive-links a {
+            display: block;
+            margin-bottom: 8px;
+            color: inherit;
+            text-decoration: underline;
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+
+        /* =========================================
+       スマホ対応（劇的ビフォーアフター版）
+       ========================================= */
+        @media (max-width: 768px) {
+            .table,
+            .table tbody {
+                display: block;
+                width: 100%;
+            }
+
+            .table tr:first-child {
+                display: none;
+            }
+
+            .table tr {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 40px;
+                /* 枠線の色も少し調整 */
+                border: 1px solid rgba(128, 128, 128, 0.3);
+
+                /* ★背景色を変数にする（ライトモードで見やすくなる） */
+                background: var(--card-bg);
+            }
+
+            /* --- 月の表示 --- */
+            .table th:nth-child(2) {
+                order: -1;
+                width: 100%;
+                display: block;
+                text-align: left;
+                padding: 10px 15px;
+
+                /* ★背景色を変数にする（これで青になる！） */
+                background: var(--theme-color);
+                color: #fff; /* 背景が濃い色なので文字は白固定 */
+
+                font-size: 1.3rem;
+                border: none;
+                margin-bottom: 0;
+            }
+
+            .table th:nth-child(2)::after {
+                content: " Month";
+                font-size: 0.8rem;
+                opacity: 0.7;
+            }
+
+            /* --- イベントエリア --- */
+            .table td {
+                display: block;
+                width: 100% !important;
+                border: none;
+                padding: 15px;
+                border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+            }
+
+            .table td:last-child {
+                border-bottom: none;
+            }
+
+            .table td:empty {
+                display: none;
+            }
+
+            /* --- ラベル --- */
+
+            /* 学内イベント */
+            .table td:first-child::before {
+                content: "【 学内イベント 】";
+                display: block;
+
+                /* ★ここも変数にする（これで青になる！） */
+                color: var(--theme-color);
+                border-bottom: 1px dashed var(--theme-color);
+
+                font-weight: bold;
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+                padding-bottom: 2px;
+                width: fit-content;
+            }
+
+            /* 渉外イベント（ここは常に水色系のままでOKならそのまま） */
+            .table td:last-child::before {
+                content: "【 渉外イベント 】";
+                display: block;
+                color: #87cefa; /* ライトモードでもこの色は見やすいので固定 */
+                font-weight: bold;
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+                border-bottom: 1px dashed #87cefa;
+                padding-bottom: 2px;
+                width: fit-content;
+            }
+
+            /* ライトモードのときだけ渉外の色を少し濃くしたい場合は以下を追加 */
+            :global(body.light-mode) .table td:last-child::before {
+                color: #0099cc;
+                border-bottom-color: #0099cc;
+            }
+        }
+    </style>
+</Layout>

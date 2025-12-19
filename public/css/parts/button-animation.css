@@ -1,0 +1,55 @@
+/* css/parts/button-animation.css */
+/*==================================================
+少し出ていた線が伸びる
+===================================*/
+
+
+.btnlinestretches2 {
+    /*線の基点とするためrelativeを指定*/
+    position: relative;
+    /*ボタンの形状*/
+    color: var(--btn-line-color);
+    /* 変更箇所: #eee から変数に変更 */
+    padding: 5px 40px;
+    display: inline-block;
+    text-decoration: none;
+    outline: none;
+}
+
+/*線の設定*/
+.btnlinestretches2::before,
+.btnlinestretches2::after {
+    content: '';
+    /*絶対配置で線の位置を決める*/
+    position: absolute;
+    /*事前に出現させる線の形状*/
+    border: solid var(--btn-line-color);
+    /* 変更箇所: #eee から変数に変更 */
+    width: 10px;
+    height: 10px;
+    /*アニメーションの指定*/
+    transition: all 0.3s ease-in-out;
+}
+
+.btnlinestretches2::before {
+    /*事前に出現させる線の位置*/
+    top: 0;
+    left: 0;
+    /*事前に出現させる線の形状*/
+    border-width: 1px 0 0 1px;
+}
+
+.btnlinestretches2::after {
+    /*事前に出現させる線の位置*/
+    bottom: 0;
+    right: 0;
+    /*事前に出現させる線の形状*/
+    border-width: 0 1px 1px 0;
+}
+
+/*hoverした際の線の形状*/
+.btnlinestretches2:hover::before,
+.btnlinestretches2:hover::after {
+    border-color: var(--btn-line-color);
+    /* 変更箇所: #eee から変数に変更 */
+}

@@ -1,0 +1,27 @@
+/* Header Styles */
+#header h1 a {
+    color: #ddd;
+    /* この色はテーマとは独立？であればlayoutに残す */
+}
+
+#header h1 {
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    padding: 0 0 0 2%;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* Navigation */
+#g-nav {
+    background-color: #111;
+}
+
+@media screen and (max-width:960px) {
+    #header h1 {
+        position: absolute;
+        top: 22px;
+        left: 20px;
+        padding: 0;
+    }
+}

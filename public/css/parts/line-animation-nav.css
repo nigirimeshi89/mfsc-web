@@ -1,0 +1,48 @@
+/* css/parts/line-animation-nav.css */
+/*==================================================
+左から右に線が伸びる（下部）
+===================================*/
+.nav01c li a {
+    /*線の基点とするためrelativeを指定*/
+    position: relative;
+}
+
+.nav01c li.current a,
+.nav01c li a:hover {
+    color: #eee;
+}
+
+.nav01c li a::after {
+    content: '';
+    /*絶対配置で線の位置を決める*/
+    position: absolute;
+    bottom: 16px;
+    left: 25%;
+    /*線の形状*/
+    width: 50%;
+    height: 1px;
+    background: #eee;
+    /*アニメーションの指定*/
+    transition: all .3s;
+    transform: scale(0, 1);
+    /*X方向0、Y方向1*/
+    transform-origin: left top;
+    /*左上基点*/
+}
+
+.nav01c li li a::after {
+    display: none;
+}
+
+/*現在地とhoverの設定*/
+.nav01c li.current a::after,
+.nav01c li a:hover::after {
+    transform: scale(1, 1);
+    /*X方向にスケール拡大*/
+}
+
+@media screen and (max-width:960px) {
+    .nav01c li a::after {
+        display: none;
+    }
+}

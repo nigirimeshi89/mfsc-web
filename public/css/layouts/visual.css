@@ -1,0 +1,83 @@
+/* Visual Area Styles */
+#vidual-area {
+    position: relative;
+    height: 100vh;
+}
+
+#vidual-area #slider-area {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 85%;
+    z-index: -1;
+    /*最背面へ*/
+}
+
+#vidual-area h2 {
+    line-height: 1.5;
+    text-transform: uppercase;
+    font-size: 3vw;
+    position: absolute;
+    top: 36%;
+    left: 5%;
+}
+
+#vidual-area dl {
+    position: absolute;
+    left: 2%;
+    bottom: 2%;
+    color: #aaa;
+    /* この色はテーマによって変わるなら var() に */
+}
+
+#vidual-area dt,
+#vidual-area dd,
+#vidual-area ul,
+#vidual-area ul li {
+    display: inline-block;
+}
+
+#vidual-area dt {
+    text-transform: uppercase;
+}
+
+#vidual-area ul li {
+    margin: 0 10px;
+}
+
+#vidual-area ul img {
+    width: 20px;
+}
+
+@media screen and (max-width:960px) {
+    #vidual-area {
+        height: 90vh;
+    }
+
+    #vidual-area #slider-area {
+        width: 100%;
+        height: 90vh;
+    }
+
+    #vidual-area h2 {
+        font-size: 2.1rem;
+    }
+
+    #vidual-area dl {
+        left: 20px;
+        bottom: 16px;
+    }
+
+    #vidual-area ul li {
+        margin: 0 2px;
+    }
+
+}
+
+@media screen and (max-width:450px) {
+    #vidual-area h2 {
+        font-size: 7vw;
+        top: inherit;
+        bottom: 13%;
+    }
+}

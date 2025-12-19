@@ -1,0 +1,99 @@
+@charset "utf-8";
+/* テーマ（ライト/ダークモード）のためのCSS */
+
+/* ======= Light/Dark Mode Theme Variables ======= */
+/* :root はデフォルト（ダークモード）の変数を定義 */
+:root {
+    --bg-color: #000000;
+    /* 全体の背景色 */
+    --text-color: #eeeeee;
+    /* デフォルトのテキスト色 */
+    --accent-color: #760101;
+    /* アクセントカラー (赤系) */
+    --hover-color: #a00000;
+    /* ホバー時の色 (暗めの赤) */
+
+    /* 新しい変数定義 for dark mode default */
+    --btn-line-color: #eeeeee;
+
+    /* footerの色 */
+    --footer-text-color: #ffffff;
+
+    /* セクション背景やボーダーの色 */
+    --bg-color-service-area: #232323;
+    /* service-area::after の背景色 */
+    --news-img-after-bg-color: #000;
+    /* news-img::after の背景色 */
+    --border-color: #aaa;
+    /* 各種ボーダーの色 */
+    --box-bg-color: #000000;
+    /* .box (アコーディオンコンテンツ) の背景色 */
+    --topic-area-bg-color: transparent;
+    /* #topics エリアの背景色 */
+
+    /* ヘッダー・フッター・ナビの色 */
+    --header-bg-color: #1a1a1a;
+    --footer-bg-color: #1a1a1a;
+    --header-link-color: #ff5a5a;
+    /* Header内のaタグの色 (例: H1のリンク) */
+    --gnav-link-color: #ffffff;
+    /* g-nav内のリンク文字色 */
+    --gnav-openbtn-line-color: #ffffff;
+    /* ハンバーガーメニュー線の色 */
+
+    /* その他の要素の色 */
+    --link-color: #ff5a5a;
+    /* 一般的なaタグの色 */
+    --header-h1-a-color: #ddd;
+    /* Header h1 a color, if it changes with theme */
+    --dl-color: #aaa;
+    /* #vidual-area dl color */
+    --news-time-color: #aaa;
+    /* #news .area time color */
+    --new-tag-color: #fff959;
+    /* .new p の色 */
+
+    /* アイコンの色 */
+    --social-icon-color: white;
+    /* SVGのfill="white"に対応 */
+    --search-open-btn-color: #ffffff;
+    /* 虫眼鏡アイコン自体の色 */
+    --search-open-btn-bg-color: transparent;
+    /* 虫眼鏡アイコンの背景色 */
+
+    /* Twitterウィジェットの色 */
+    --twitter-widget-bg-color: #000000;
+
+    /* Tab関連の色 */
+    --tab-bg-color: #333;
+    /* Tabのデフォルト背景色 */
+    --tab-border-color: #000;
+    /* Tabのボーダー色 */
+    --tab-active-bg-color: #000;
+    /* アクティブなTabの背景色 */
+    --tab-active-border-color: #aaa;
+    /* アクティブなTabのボーダー色 */
+
+    /* 伸びる背景アニメーションの色 */
+    --bgextend-bg-color: #000000;
+    /* body.appear #vidual-area::after や .bgLRextendTrigger.bgLRextend の背景色 */
+
+    /* ギャラリーリンクのホバー色（デフォルト/ダークモード） */
+    --gallery-link-text-color: var(--text-color);
+    /* 通常はデフォルトテキスト色 */
+    --gallery-link-hover-color: #ffffff;
+    /* ホバー時は白（ダークモードのテキストと同じか強調） */
+    --gallery-link-bg-color: transparent;
+    /* 通常時の背景 */
+    --gallery-link-hover-bg-color: #a00000;
+    /* ホバー時の背景を濃い赤に */
+
+    /* ソートボタンの文字色 */
+    --sort-btn-text-color: #ffffff;
+    /* 変更点: ソートボタンの文字色を白に固定 (ダークモード) */
+    /* ソートボタンのアクティブ/通常時の背景色 (ダークモード) */
+    --sort-btn-bg-color: #565656;
+    /* 通常時の背景色を固定 */
+    --sort-btn-active-bg-color: var(--accent-color);
+    /* アクティブ時はアクセントカラー */
+}

@@ -1,0 +1,153 @@
+/* Gallery Styles */
+
+/* ===================================
+   部員リスト（グリッドレイアウト）
+   =================================== */
+.grid {
+    display: flex;
+    /* 横並びにする */
+    flex-wrap: wrap;
+    /* 折り返しを許可 */
+    justify-content: center;
+    /* 中央寄せ */
+    gap: 30px;
+    /* 画像同士の隙間 */
+    padding: 20px;
+    margin: 0 auto;
+    list-style: none;
+    max-width: 1200px;
+    /* 広がりすぎないように制限 */
+    position: relative;
+    /* 念のため基準点を設定 */
+}
+
+/* 各アイテム（部員一人ひとり）の設定 */
+.item {
+    position: relative;
+    /* ★最重要：absoluteをやめてrelativeにする */
+    display: block;
+    width: 180px;
+    /* 画像の基本サイズ */
+    margin-bottom: 20px;
+    transition: opacity 0.3s ease;
+    /* 絞り込み時のフワッとした動き */
+
+    /* 以前のMuuri用の設定を無効化 */
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+}
+
+/* 内側のコンテンツ */
+.item-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+}
+
+/* 画像の設定（丸く切り抜く） */
+.img-box {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    /* 正方形を維持 */
+    overflow: hidden;
+    border-radius: 50%;
+    /* 丸くする */
+    border: 3px solid transparent;
+    transition: border-color 0.3s;
+    background: #333;
+    /* 画像読み込み前の背景色 */
+}
+
+.img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* トリミングして枠いっぱいに表示 */
+    vertical-align: bottom;
+}
+
+/* ホバー時の動き */
+.item:hover .img-box {
+    border-color: #b22222;
+    /* ホバー時に赤枠（テーマカラー） */
+}
+
+/* 名前の表示 */
+.item span {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #fff;
+    /* 文字色（白） */
+    font-size: 0.95rem;
+}
+
+
+/* ===================================
+   絞り込みボタン
+   =================================== */
+.sort-btn {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 30px 20px;
+    gap: 10px;
+    list-style: none;
+}
+
+.sort-btn li {
+    background: transparent;
+    border: 1px solid #ccc;
+    color: #fff;
+    border-radius: 30px;
+    cursor: pointer;
+    padding: 8px 20px;
+    margin: 0;
+    transition: all 0.3s;
+}
+
+.sort-btn li:hover,
+.sort-btn li.active {
+    background: #b22222;
+    /* アクティブ時は赤 */
+    border-color: #b22222;
+}
+
+
+/* ===================================
+   レスポンシブ（スマホ対応）
+   =================================== */
+@media only screen and (max-width: 768px) {
+    .grid {
+        gap: 15px;
+    }
+
+    /* スマホでは2列表示くらいが丁度いい */
+    .item {
+        width: 45%;
+        max-width: 160px;
+    }
+
+    .item span {
+        font-size: 0.8rem;
+    }
+
+    .sort-btn {
+        padding: 20px 10px;
+    }
+
+    .sort-btn li {
+        padding: 6px 15px;
+        font-size: 0.85rem;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+
+    /* さらに小さい画面用 */
+    .grid {
+        padding: 10px;
+    }
+}

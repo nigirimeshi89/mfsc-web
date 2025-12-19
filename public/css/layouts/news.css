@@ -1,0 +1,77 @@
+/* News Section Styles */
+.news-img-wrapper {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    width: 90%;
+    height: 60vh;
+}
+
+.news-img {
+    height: 60vh;
+    background: url("../../img/main/2024夏祭り1.jpg") no-repeat center;
+    background-size: cover;
+}
+
+.limited .news-img {
+    height: 60vh;
+    background: url("../../img/main/春祭り.jpg") no-repeat center;
+    background-size: cover;
+}
+
+.news-img::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 70%;
+    height: 10vh;
+    background: var(--news-img-after-bg-color);
+    /* theme.cssで制御 */
+    z-index: 2;
+}
+
+#news {
+    padding: 0 0 5% 15%;
+}
+
+#news .area li {
+    padding: 20px 0;
+}
+
+#news .area time {
+    display: block;
+    color: var(--news-time-color);
+    /* theme.cssで制御 */
+}
+
+#news .tab {
+    position: relative;
+    top: 1px;
+}
+
+#news .tab-choice-area {
+    border-top: 1px solid var(--border-color);
+    /* theme.cssで制御 */
+    border-left: 1px solid var(--border-color);
+    /* theme.cssで制御 */
+}
+
+/* 追加: .area にデフォルトの背景色を設定（theme.cssで上書きされる） */
+.area {
+    background-color: transparent;
+    /* デフォルトは透明 */
+}
+
+@media only screen and (max-width: 1110px) {
+    .tab-area {
+        width: 100%;
+    }
+
+}
+
+@media only screen and (max-width: 768px) {
+    #news {
+        padding: 0 0 5% 30px;
+    }
+}

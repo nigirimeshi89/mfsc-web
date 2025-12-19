@@ -1,0 +1,196 @@
+/* Service Section Styles */
+#service {
+    padding: 10% 15% 10% 15%;
+}
+
+@media screen and (max-width:768px) {
+    #service {
+        padding: 30% 30px 10% 30px;
+    }
+}
+
+@media screen and (max-width:500px) {
+    #service .service-lead {
+        padding: 0 10% 0 0;
+    }
+
+    #service .service-lead br {
+        display: none;
+    }
+}
+
+#service .service-area {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 10% 0 0 10%;
+    position: relative;
+}
+
+#service .service-area::after {
+    opacity: 0;
+}
+
+#service .service-area.startwd::after {
+    content: '';
+    position: absolute;
+    top: 10%;
+    right: 0;
+    width: 80%;
+    height: 60vh;
+    background: var(--bg-color-service-area);
+    /* CSS変数を使用 */
+    z-index: -1;
+    animation-name: sevicebgRLextendAnime;
+    animation-duration: .9s;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+    animation-delay: 1s;
+}
+
+#service .service-area section {
+    width: 30%;
+}
+
+@media screen and (max-width:570px) {
+    #service .service-area section {
+        width: 100%;
+        margin: 0 0 100px 0;
+        padding: 0 10% 0 0;
+    }
+
+}
+
+#service .service-area section h3 {
+    font-size: 1.5rem;
+    margin: 0 0 30px 0;
+}
+
+#service .service-area section p {
+    margin: 0 0 30px 0;
+}
+
+#service .service-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    width: 30%;
+    height: 60vh;
+}
+
+#service .service-img {
+    height: 60vh;
+    background: url("../../img/main/24春祭り1.jpg") no-repeat center;
+    background-size: cover;
+}
+
+.limited #service .service-img {
+    height: 60vh;
+    background: url("../../img/main/2023若杉祭1.jpg") no-repeat center;
+    background-size: cover;
+}
+
+@media screen and (max-width:570px) {
+
+    #service .service-img-wrapper,
+    #service .service-img {
+        width: 100%;
+        height: 40vh;
+        background-position: right;
+    }
+
+    #service .service-img-wrapper {
+        margin: 0 0 50px 0;
+    }
+}
+
+/* Service1 Section (similar to Service, but with specific background color) */
+#service1 {
+    padding: 10% 15% 0% 15%;
+}
+
+@media screen and (max-width:768px) {
+    #service1 {
+        padding: 30% 30px 10% 30px;
+    }
+}
+
+@media screen and (max-width:500px) {
+    #service1 .service-lead {
+        padding: 0 10% 0 0;
+    }
+
+    #service1 .service-lead br {
+        display: none;
+    }
+}
+
+#service1 .service-area {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 10% 0 0 10%;
+    position: relative;
+}
+
+#service1 .service-area::after {
+    opacity: 0;
+}
+
+#service1 .service-area.startwd::after {
+    content: '';
+    position: absolute;
+    top: 10%;
+    right: 0;
+    width: 80%;
+    height: 60vh;
+    background: #232323;
+    /* この色はテーマで変わるなら var() に変更 */
+    z-index: -1;
+    animation-name: sevicebgRLextendAnime;
+    animation-duration: .9s;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+#service1 .service-area section {
+    width: 30%;
+}
+
+@media screen and (max-width:570px) {
+    #service1 .service-area section {
+        width: 100%;
+        margin: 0 0 100px 0;
+        padding: 0 10% 0 0;
+    }
+
+}
+
+#service1 .service-area section h3 {
+    font-size: 1.5rem;
+    margin: 0 0 30px 0;
+}
+
+#service1 .service-area section p {
+    margin: 0 0 30px 0;
+}
+
+#service1 .service-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    width: 30%;
+    height: 60vh;
+}
+
+@media screen and (max-width:570px) {
+
+    #service1 .service-img-wrapper,
+    #service1 .service1-img {
+        width: 100%;
+        height: 40vh;
+        background-position: right;
+    }
+
+    #service .service-img-wrapper {
+        margin: 0 0 50px 0;
+    }
+}

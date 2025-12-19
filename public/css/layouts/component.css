@@ -1,0 +1,209 @@
+/* Reusable UI Components */
+
+/* Scroll indicator */
+/* 変更点: scrolldown1 span の色を白に固定 */
+.scrolldown1 span {
+    color: #ffffff;
+    /* 白に固定 */
+    transform: rotate(-90deg);
+    text-transform: uppercase;
+    left: -23px;
+    top: -31px;
+}
+
+/* scrolldown1 自体に背景色を追加し、テーマに合わせて変化させる */
+.scrolldown1 {
+    background-color: var(--scrolldown-bg-color);
+    /* 新しいCSS変数 */
+    transition: background-color 0.3s;
+}
+
+/* Button */
+.btnlinestretches2 {
+    border: 2px solid currentColor;
+    background: transparent;
+    color: inherit;
+    padding: 10px 20px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Navigation - General (can be used for main navigation, not specific to #g-nav layout) */
+.gnavi {
+    display: flex;
+    flex-wrap: wrap;
+    /*スマホ表示折り返し用なのでPCのみなら不要*/
+    margin: 0 0 50px 0;
+    list-style: none;
+    flex-direction: column;
+    /* For vertical menus */
+}
+
+.gnavi li a {
+    display: block;
+    padding: 10px 30px;
+    text-decoration: none;
+    color: #ffffff;
+    /*線の基点とするためrelativeを指定*/
+    position: relative;
+    /*はみ出る要素を隠す*/
+    overflow: hidden;
+    /*アニメーションの指定*/
+    transition: all .2s;
+}
+
+.gnavi li {
+    margin-bottom: 20px;
+}
+
+/*現在地とhoverの設定*/
+.gnavi li.current a,
+.gnavi li a:hover {
+    background: var(--accent-color);
+    /* CSS変数を使用 */
+    color: var(--text-color);
+    /* CSS変数を使用 */
+}
+
+/*背景がつくのアニメーションの開始を0.3秒遅らせる*/
+.gnavi li a:hover {
+    transition-delay: .3s;
+}
+
+/*線の設定*/
+.gnavi li a:before,
+.gnavi li a:after {
+    content: "";
+    /*絶対配置で線の位置を決める*/
+    position: absolute;
+    left: 0;
+    /*線の形状*/
+    height: 2px;
+    width: 100%;
+    background: var(--accent-color);
+    /* CSS変数を使用 */
+    /*アニメーションの指定*/
+    transition: all .5s;
+}
+
+/*線の位置と変化*/
+.gnavi li a::before {
+    top: 0;
+    transform: translateX(-100%);
+    /*X方向に-100%移動*/
+}
+
+.gnavi li a::after {
+    bottom: 0;
+    transform: translateX(100%);
+    /*X方向に100%移動*/
+}
+
+/*hoverした際の線の変化*/
+.gnavi li a:hover::before,
+.gnavi li a:hover::after {
+    transform: translateX(0);
+    /*X方向に0%移動*/
+}
+
+/* Mode Toggle Button */
+.mode-toggle {
+    position: fixed;
+    /* 固定位置 */
+    bottom: 20px;
+    /* 画面下から20px */
+    right: 20px;
+    /* 画面右から20px */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+.mode-toggle img {
+    width: 32px;
+    height: 32px;
+}
+
+/* Freshman.html Link Fix */
+.freshman a {
+    position: relative;
+    /* 他の要素との重なり順を制御しやすくするため */
+    z-index: 100;
+    /* 他の要素よりも手前に表示されるように高いz-indexを設定 */
+    pointer-events: auto !important;
+    /* クリックイベントを強制的に有効にする */
+    /* 必要であれば、display: block; や適切な width/height を追加してクリック領域を確保 */
+    display: inline-block;
+    /* クリック領域を確保するため */
+    padding: 10px 20px;
+    /* 十分なクリック領域を与えるため */
+}
+
+/* Accordion */
+.accordion-area {
+    list-style: none;
+    width: 96%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.accordion-area td {
+    margin: 10px 0;
+}
+
+.accordion-area section {
+    border: 1px solid #5d5c5c;
+}
+
+/*アコーディオンタイトル*/
+.title3 {
+    position: relative;
+    /*+マークの位置基準とするためrelative指定*/
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: normal;
+    padding: 3% 3% 3% 50px;
+    transition: all .5s ease;
+}
+
+/*アイコンの＋と×*/
+.title3::before,
+.title3::after {
+    position: absolute;
+    content: '';
+    width: 15px;
+    height: 2px;
+    background-color: #ccc;
+
+}
+
+.title3::before {
+    top: 48%;
+    left: 15px;
+    transform: rotate(0deg);
+
+}
+
+.title3::after {
+    top: 48%;
+    left: 15px;
+    transform: rotate(90deg);
+
+}
+
+/*　closeというクラスがついたら形状変化　*/
+.title3.close::before {
+    transform: rotate(45deg);
+}
+
+.title3.close::after {
+    transform: rotate(-45deg);
+}
+
+/*アコーディオンで現れるエリア*/
+.box3 {
+    display: none;
+    /*はじめは非表示*/
+    margin: 0 3% 3% 3%;
+    padding: 3%;
+}

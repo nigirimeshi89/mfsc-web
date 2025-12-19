@@ -1,0 +1,58 @@
+/* Utility Styles */
+.main-info {
+    background-color: rgba(255, 252, 252, 0.168);
+    text-align: center;
+}
+
+.image-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 20px;
+    margin-right: 20px;
+}
+
+.image-row .pc {
+    width: 50%;
+    height: auto;
+}
+
+.sp {
+    display: none;
+}
+
+@media only screen and (max-width: 480px) {
+    .pc {
+        display: none;
+    }
+
+    .sp {
+        display: block;
+
+        img {
+            width: 33%;
+            height: auto;
+        }
+    }
+}
+
+table {
+    border: dashed 2px var(--border-color);
+    /* 修正: CSS変数を使用 */
+    border-spacing: 80px;
+    text-align: center;
+    font-size: large;
+    margin: auto;
+}
+
+/* スマホ向けに調整 */
+@media (max-width: 768px) {
+    table {
+        font-size: medium;
+        border-spacing: 40px;
+    }
+}
+
+ul li span {
+    padding-left: 50px;
+}

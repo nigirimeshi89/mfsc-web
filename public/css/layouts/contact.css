@@ -1,0 +1,80 @@
+/* Contact Section Styles */
+#contact {
+    border-top: 1px solid var(--border-color);
+    /* theme.cssで制御 */
+    border-bottom: 1px solid var(--border-color);
+    /* theme.cssで制御 */
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+#contact .contact-detail {
+    width: 65%;
+    border-right: 1px solid var(--border-color);
+    /* theme.cssで制御 */
+    text-align: center;
+    padding: 20px;
+}
+
+#contact .contact-detail h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.5rem;
+}
+
+#contact .contact-detail p {
+    margin: 0 0 10px 0;
+}
+
+#contact .contact-tel {
+    width: 35%;
+}
+
+#contact .contact-tel p {
+    text-align: center;
+}
+
+#contact .contact-tel p a {
+    display: block;
+    padding: 20px;
+    transition: all .3s;
+}
+
+#contact .contact-tel p a:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#contact .contact-tel p:last-child {
+    border-top: 1px solid var(--border-color);
+    /* theme.cssで制御 */
+}
+
+#contact .contact-tel br {
+    display: none;
+}
+
+@media screen and (max-width:690px) {
+
+    #contact .contact-detail,
+    #contact .contact-tel {
+        width: 50%;
+    }
+
+    #contact .contact-tel br {
+        display: block;
+    }
+
+    #contact .contact-detail h2 {
+        font-size: 1.2rem;
+    }
+
+    #contact .contact-detail p {
+        text-align: left;
+    }
+}
+
+@media screen and (max-width:400px) {
+    #contact {
+        font-size: 0.8rem;
+    }
+}

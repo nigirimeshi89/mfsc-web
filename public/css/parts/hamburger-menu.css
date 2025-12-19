@@ -1,0 +1,165 @@
+/* css/parts/hamburger-menu.css */
+/*==================================================
+クリックしたらナビが上から下に出現
+===================================*/
+
+@media screen and (max-width:960px) {
+    #g-nav {
+        /*position:fixed;にし、z-indexの数値を大きくして前面へ*/
+        position: fixed;
+        z-index: 999;
+        /*ナビのスタート位置と形状*/
+        top: -120%;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        /*ナビの高さ*/
+        background: rgba(0, 0, 0, 0.8);
+        /* テーマ変数に変更を推奨 */
+        /*動き*/
+        transition: all 0.6s;
+    }
+
+    /*アクティブクラスがついたら位置を0に*/
+    #g-nav.panelactive {
+        top: 0;
+    }
+
+    /*ナビゲーションの縦スクロール*/
+    #g-nav.panelactive #g-nav-list {
+        /*ナビの数が増えた場合縦スクロール*/
+        position: fixed;
+        z-index: 999;
+        width: 100%;
+        height: 100vh;
+        /*表示する高さ*/
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /*ナビゲーション*/
+    #g-nav ul {
+        /*ナビゲーション天地中央揃え*/
+        width: 90%;
+        margin: 100px auto 0 auto;
+    }
+
+    #g-nav ul ul {
+        width: 100%;
+        margin: 0;
+    }
+
+    /*プルダウンナビのCSS*/
+    #g-nav ul li.has-child ul {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        visibility: visible;
+        /*JSで制御するため一旦表示*/
+        opacity: 1;
+        /*JSで制御するため一旦表示*/
+        display: none;
+        /*JSのslidetoggleで表示させるため非表示に*/
+        transition: none;
+        /*JSで制御するためCSSのアニメーションを切る*/
+        transform: none;
+    }
+
+    /*リストのレイアウト設定*/
+
+    #g-nav li {
+        list-style: none;
+        text-align: center;
+    }
+
+    #g-nav li a {
+        color: #aaa;
+        /* テーマ変数に変更を推奨 */
+        text-decoration: none;
+        padding: 10px;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: bold;
+    }
+}
+
+/*==================================================
+3本線が奥行きを持って回転して×に
+===================================*/
+
+.g-nav-openbtn {
+    display: none;
+}
+
+@media screen and (max-width:960px) {
+    .g-nav-openbtn {
+        display: block;
+        position: fixed;
+        z-index: 9999;
+        /*ボタンを最前面に*/
+        top: 10px;
+        right: 70px;
+        cursor: pointer;
+        width: 50px;
+        height: 50px;
+    }
+
+    /*ボタン内側*/
+
+    .g-nav-openbtn .openbtn-area {
+        transition: all .4s;
+    }
+
+    .g-nav-openbtn span {
+        display: inline-block;
+        transition: all .4s;
+        /*アニメーションの設定*/
+        position: absolute;
+        left: 14px;
+        height: 3px;
+        border-radius: 2px;
+        background: #fff;
+        /* テーマ変数に変更を推奨 */
+        width: 45%;
+    }
+
+
+    .g-nav-openbtn span:nth-of-type(1) {
+        top: 15px;
+    }
+
+    .g-nav-openbtn span:nth-of-type(2) {
+        top: 23px;
+    }
+
+    .g-nav-openbtn span:nth-of-type(3) {
+        top: 31px;
+    }
+
+    /*activeクラスが付与されると
+線と周りのエリアが回転して×になる*/
+
+    .g-nav-openbtn.active .openbtn-area {
+        transform: rotateY(-360deg);
+    }
+
+    .g-nav-openbtn.active span:nth-of-type(1) {
+        top: 18px;
+        left: 18px;
+        transform: translateY(6px) rotate(-135deg);
+        width: 30%;
+    }
+
+    .g-nav-openbtn.active span:nth-of-type(2) {
+        opacity: 0;
+    }
+
+    .g-nav-openbtn.active span:nth-of-type(3) {
+        top: 30px;
+        left: 18px;
+        transform: translateY(-6px) rotate(135deg);
+        width: 30%;
+    }
+}

@@ -1,0 +1,86 @@
+@charset "utf-8";
+
+/* Basic Reset and Global Styles */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1rem;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    word-wrap: break-word;
+    /* background: #000; (移動済み) */
+    /* color: #eee; (移動済み) */
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+a {
+    /* color: #eee; (移動済み) */
+    text-decoration: none;
+    outline: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Container */
+#container {
+    overflow-x: hidden;
+    /*以下、IE11用*/
+    z-index: 1;
+    position: relative;
+}
+
+/* Headings - Common Styles */
+h1,
+h2,
+h3 {
+    transition: color 0.3s;
+}
+
+h2 {
+    font-size: 2rem;
+    margin: 0 0 50px 0;
+    text-transform: uppercase;
+}
+
+/* Font Families */
+h1,
+h2,
+#service .service-area section h3,
+#g-nav,
+#footer-link,
+.scrolldown1 span,
+#vidual-area dt,
+.footer-logo {
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.2em;
+}
+
+/* Responsive Font Sizes */
+@media screen and (max-width:960px) {
+    body {
+        font-size: 0.75rem;
+    }
+
+    h1 {
+        a {
+            font-size: 0.75rem;
+        }
+    }
+
+    h2 {
+        font-size: 1rem;
+    }
+}

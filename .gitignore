@@ -1,0 +1,16 @@
+# .gitignore
+
+# 依存関係（超重いので絶対に無視！）
+node_modules/
+
+# ビルド出力（自動生成されるので無視）
+dist/
+.astro/
+
+# 環境変数（セキュリティのため無視）
+.env
+.env.local
+
+# システムファイル
+.DS_Store
+Thumbs.db

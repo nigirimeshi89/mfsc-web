@@ -1,0 +1,440 @@
+---
+// src/pages/member.astro
+import Layout from "../layouts/Layout.astro";
+import { createClient } from "microcms-js-sdk";
+import type { MicroCMSListResponse } from "microcms-js-sdk";
+
+// ▼ 部員の設計図
+type Member = {
+    id: string;
+    name: string;
+    image: { url: string };
+    grade: any;
+    parts: string | string[];
+    content?: string; // テキストエリア（紹介文）
+};
+
+// ▼ MicroCMSに接続
+const client = createClient({
+    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+    apiKey: import.meta.env.MICROCMS_API_KEY,
+});
+
+// ▼ 部員データを全件取得
+const response = await client.get<MicroCMSListResponse<Member>>({
+    endpoint: "members",
+    queries: {
+        limit: 100,
+        orders: "grade",
+        fields: ["id", "name", "image", "grade", "parts", "content"],
+    },
+});
+
+// ▼ 学年計算
+const getSchoolYear = (enrollmentYear: number) => {
+    if (!enrollmentYear || isNaN(enrollmentYear)) return 0;
+    const now = new Date();
+    const currentFiscalYear =
+        now.getMonth() < 3 ? now.getFullYear() - 1 : now.getFullYear();
+    return currentFiscalYear - enrollmentYear + 1;
+};
+
+// ▼ パート名正規化（表記揺れ吸収）
+const normalizePart = (p: string): string => {
+    const lower = p.toLowerCase();
+    if (lower.includes("vo") || lower.includes("ボーカル")) return "Vo";
+    if (
+        lower.includes("gt") ||
+        lower.includes("guitar") ||
+        lower.includes("ギター")
+    )
+        return "Gt";
+    if (
+        lower.includes("ba") ||
+        lower.includes("bass") ||
+        lower.includes("ベース")
+    )
+        return "Ba";
+    if (
+        lower.includes("dr") ||
+        lower.includes("drum") ||
+        lower.includes("ドラム")
+    )
+        return "Dr";
+    if (
+        lower.includes("key") ||
+        lower.includes("key") ||
+        lower.includes("キーボード")
+    )
+        return "Key";
+    return p;
+};
+---
+
+<Layout title="MEMBER">
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <h2>
+            <span class="js_typing">Modern Folk Song Club</span><br /><span
+                class="js_typing">Members</span>
+        </h2>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service1">
+            <h2>Member</h2>
+
+            <div class="sort-container">
+                <ul class="sort-row">
+                    <li class="filter-btn active" data-filter="all">全て</li>
+                    <li class="filter-btn" data-filter="grade-4">4年会</li>
+                    <li class="filter-btn" data-filter="grade-3">3年会</li>
+                    <li class="filter-btn" data-filter="grade-2">2年会</li>
+                    <li class="filter-btn" data-filter="grade-1">1年会</li>
+                </ul>
+                <ul class="sort-row">
+                    <li class="filter-btn" data-filter="part-Vo">ボーカル</li>
+                    <li class="filter-btn" data-filter="part-Gt">ギター</li>
+                    <li class="filter-btn" data-filter="part-Ba">ベース</li>
+                    <li class="filter-btn" data-filter="part-Dr">ドラム</li>
+                    <li class="filter-btn" data-filter="part-Key">
+                        キーボード
+                    </li>
+                </ul>
+            </div>
+
+            <ul id="gallery" class="grid delayScroll">
+                {
+                    response.contents.map((member) => {
+                        // 学年処理
+                        let rawGrade = Array.isArray(member.grade)
+                            ? member.grade[0]
+                            : member.grade;
+                        let gradeNum = parseInt(
+                            String(rawGrade).replace(/[^0-9]/g, ""),
+                            10,
+                        );
+                        const schoolYear = getSchoolYear(gradeNum);
+
+                        // パート処理
+                        let rawPartsArray: string[] = [];
+                        if (Array.isArray(member.parts)) {
+                            rawPartsArray = member.parts;
+                        } else if (member.parts) {
+                            rawPartsArray = [member.parts as string];
+                        }
+
+                        // 表示用
+                        const partsDisplay = rawPartsArray.join(" / ");
+
+                        // 絞り込み用（正規化）
+                        const normalizedParts = rawPartsArray.map((p) =>
+                            normalizePart(p),
+                        );
+                        const filterClasses =
+                            `grade-${schoolYear} ` +
+                            normalizedParts.map((p) => `part-${p}`).join(" ");
+
+                        return (
+                            <li class={`item ${filterClasses}`}>
+                                <div class="item-content">
+                                    <a
+                                        data-fancybox
+                                        data-src={`#modal-${member.id}`}
+                                        href="javascript:;"
+                                        class="member-link"
+                                    >
+                                        <div class="img-box">
+                                            <img
+                                                src={member.image.url}
+                                                alt={member.name}
+                                            />
+                                        </div>
+                                        <span>{member.name}</span>
+                                    </a>
+
+                                    <div
+                                        style="display: none;"
+                                        id={`modal-${member.id}`}
+                                        class="member-popup"
+                                    >
+                                        <div class="popup-inner">
+                                            <div class="popup-img-area">
+                                                <img
+                                                    src={member.image.url}
+                                                    alt={member.name}
+                                                />
+                                            </div>
+                                            <div class="popup-text-area">
+                                                <h3 class="popup-name">
+                                                    {member.name}
+                                                </h3>
+                                                <div class="popup-info">
+                                                    <span class="badge grade">
+                                                        {schoolYear}年会
+                                                    </span>
+                                                    <span class="badge part">
+                                                        {partsDisplay}
+                                                    </span>
+                                                </div>
+
+                                                {/* 紹介文（改行反映版） */}
+                                                {member.content ? (
+                                                    <div class="popup-comment">
+                                                        {member.content}
+                                                    </div>
+                                                ) : (
+                                                    <div
+                                                        class="popup-comment"
+                                                        style="color:#ccc;"
+                                                    >
+                                                        <p>紹介文なし</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        );
+                    })
+                }
+            </ul>
+        </section>
+    </main>
+
+    <script is:inline>
+        document.addEventListener("DOMContentLoaded", () => {
+            // ▼ 手動フィルタリング機能を復活
+            const buttons = document.querySelectorAll(".filter-btn");
+            const items = document.querySelectorAll(".item");
+
+            buttons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    // ボタンの色切り替え
+                    buttons.forEach((b) => b.classList.remove("active"));
+                    btn.classList.add("active");
+
+                    const filterValue = btn.getAttribute("data-filter");
+
+                    items.forEach((item) => {
+                        if (filterValue === "all") {
+                            // 全て表示
+                            item.style.display = "block";
+                        } else {
+                            // クラスを持っていれば表示、なければ非表示
+                            if (item.classList.contains(filterValue)) {
+                                item.style.display = "block";
+                            } else {
+                                item.style.display = "none";
+                            }
+                        }
+                    });
+                });
+            });
+
+            // Fancybox初期化
+            if (typeof $ !== "undefined" && $("[data-fancybox]").length > 0) {
+                $("[data-fancybox]").fancybox({
+                    touch: false,
+                    autoFocus: false,
+                    animationEffect: "zoom-in-out",
+                });
+            }
+        });
+    </script>
+
+    <style>
+        .sort-container {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .sort-row {
+            display: flex !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            margin-bottom: 15px !important;
+            list-style: none !important;
+            padding: 0 !important;
+        }
+
+        .filter-btn {
+            display: inline-block !important;
+            width: auto !important;
+            background: transparent;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            padding: 8px 20px;
+            cursor: pointer;
+            color: #fff;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #b22222 !important;
+            border-color: #b22222 !important;
+            color: #fff !important;
+        }
+
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+            margin: 0 auto;
+            list-style: none;
+            max-width: 1200px;
+            position: relative;
+        }
+
+        .item {
+            position: relative;
+            display: block;
+            width: 180px;
+            margin-bottom: 20px;
+            /* フェードアニメーションだけCSSで少しつけておく */
+            transition: opacity 0.3s ease;
+        }
+
+        .item-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+        }
+        .img-box {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            transition: border-color 0.3s;
+            background: #333;
+        }
+        .img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            vertical-align: bottom;
+        }
+        .item:hover .img-box {
+            border-color: #b22222;
+        }
+        .item span {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .member-popup {
+            display: none;
+            width: 90%;
+            max-width: 800px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 0;
+            color: #333;
+            overflow: hidden;
+        }
+        .popup-inner {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .popup-img-area {
+            width: 40%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .popup-img-area img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .popup-text-area {
+            width: 60%;
+            padding: 30px;
+            text-align: left;
+        }
+        .popup-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #b22222;
+            padding-bottom: 10px;
+            display: inline-block;
+            font-family: "Oswald", sans-serif;
+        }
+        .popup-info {
+            margin-bottom: 20px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            margin-right: 5px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .badge.grade {
+            background-color: #333;
+        }
+        .badge.part {
+            background-color: #b22222;
+        }
+
+        .popup-comment {
+            font-size: 1rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        @media only screen and (max-width: 768px) {
+            .grid {
+                gap: 15px;
+            }
+            .item {
+                width: 45%;
+                max-width: 160px;
+            }
+            .item span {
+                font-size: 0.8rem;
+            }
+            .member-popup {
+                max-width: 95%;
+            }
+            .popup-img-area {
+                width: 100%;
+                padding: 30px;
+            }
+            .popup-img-area img {
+                width: 150px;
+            }
+            .popup-text-area {
+                width: 100%;
+                padding: 20px;
+            }
+            .popup-name {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</Layout>

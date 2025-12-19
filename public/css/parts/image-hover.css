@@ -1,0 +1,23 @@
+/* css/parts/image-hover.css */
+/*==================================================
+ 画像リンクの動き
+===================================*/
+
+/*　印象編　7-3 画像が拡大＋回転　*/
+
+.zoomInRotate {
+	/*opacityとtransformがかけあわさると生じる表示バグの回避*/
+	backface-visibility: hidden;
+}
+
+.zoomInRotate img {
+	transform: scale(1);
+	transition: .3s ease-in-out;
+	/*移り変わる速さを変更したい場合はこの数値を変更*/
+}
+
+.zoomInRotate a:hover img {
+	/*hoverした時の変化*/
+	transform: rotate(5deg) scale(1.2);
+	/*拡大、回転の値を変更したい場合はこの数値を変更*/
+}

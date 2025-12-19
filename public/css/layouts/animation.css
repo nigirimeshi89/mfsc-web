@@ -1,0 +1,176 @@
+/* Animation Styles */
+
+@keyframes vidualbgRLextendAnime {
+    0% {
+        width: 0;
+    }
+
+    100% {
+        width: 40%;
+    }
+}
+
+body.appear #vidual-area::after {
+    content: '';
+    background: var(--accent-color);
+    /* CSS変数を使用 */
+    width: 0;
+    height: 12%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: -1;
+    animation-name: vidualbgRLextendAnime;
+    animation-duration: .2s;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+    animation-delay: 1s;
+}
+
+@keyframes sevicebgRLextendAnime {
+    0% {
+        opacity: 0;
+        width: 0;
+    }
+
+    100% {
+        opacity: 1;
+        width: 80%;
+    }
+}
+
+/* Page Transition Overlay */
+#page-transition-overlay {
+    display: none;
+    /* 初期状態では非表示 */
+    /* その他のスタイル（position, z-index, backgroundなど） */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    /* または適切な色 */
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    /* フェードイン・アウト用 */
+    transition: opacity 0.5s ease-in-out;
+    /* フェードアニメーション */
+}
+
+#page-transition-overlay.initial-load-active,
+#page-transition-overlay.active {
+    display: flex;
+    /* アクティブ時に表示 */
+    opacity: 1;
+    /* フェードイン */
+}
+
+/* フェードアウト時のスタイル (必要であれば) */
+#page-transition-overlay.fade-out {
+    opacity: 0;
+}
+
+#transitionSpectrumCanvas {
+    width: 400px;
+    height: 400px;
+    background-color: transparent;
+    /* 背景なし */
+    border: none;
+    margin-bottom: 20px;
+}
+
+@media screen and (max-width: 768px) {
+    #transitionSpectrumCanvas {
+        width: 250px;
+        height: 250px;
+        /* モバイルでは少し小さく */
+    }
+}
+
+/* Audio Spectrum Canvas */
+#audioSpectrumCanvas {
+    position: absolute;
+    /* メインコンテンツの上に重ねるため */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    /* 背景透過 */
+    z-index: 0;
+    /* 背景画像の下に表示 */
+    display: none;
+    /* 初期状態では非表示にする */
+}
+
+#spectrum-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    /* 少し大きく */
+    font-weight: bold;
+    color: white;
+    font-family: 'Oswald', 'Noto Sans JP', sans-serif;
+    pointer-events: none;
+    z-index: 1;
+    text-align: center;
+    line-height: 1.4;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+@media screen and (max-width: 768px) {
+    #spectrum-center-text {
+        font-size: 24px;
+        /* モバイルでは少し小さく */
+    }
+
+}
+
+/* Index.html 用：通常版 */
+body:not(.limited) #spectrum-center-text::before {
+    content: "Modern Folk Song Club";
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 0.1em solid rgba(255, 255, 255, 0.8);
+    animation: typing 1.25s steps(30, end) forwards, blink 0.8s step-end infinite;
+}
+
+/* Limited.html 用：限定版 */
+body.limited #spectrum-center-text::before {
+    content: "Modern Fxxin' Smoking Club";
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 0.1em solid rgba(255, 255, 255, 0.8);
+    animation: typing 1.25s steps(30, end) forwards, blink 0.8s step-end infinite;
+}
+
+/* アニメーション定義 */
+@keyframes typing {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+@keyframes blink {
+
+    from,
+    to {
+        border-color: transparent;
+    }
+
+    50% {
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+}

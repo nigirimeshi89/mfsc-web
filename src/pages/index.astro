@@ -1,0 +1,186 @@
+---
+// src/pages/index.astro
+import Layout from "../layouts/Layout.astro";
+
+// ▼ MicroCMSの道具箱
+import { createClient } from "microcms-js-sdk";
+import type { MicroCMSListResponse } from "microcms-js-sdk";
+
+// ▼ ニュースの設計図
+type News = {
+	id: string;
+	title: string;
+	date: string;
+	url?: string;
+};
+
+// ▼ MicroCMSに接続
+const client = createClient({
+	serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+	apiKey: import.meta.env.MICROCMS_API_KEY,
+});
+
+// ▼ データを取得
+const response = await client.get<MicroCMSListResponse<News>>({
+	endpoint: "news",
+	queries: { fields: ["id", "title", "date", "url"] },
+});
+---
+
+<Layout title="MAIN">
+	<div id="header-placeholder"></div>
+
+	<section id="vidual-area">
+		<div id="slider-area" class="bgextend bgRLextendTrigger">
+			<div class="bgappearTrigger">
+				<div id="slider"></div>
+			</div>
+		</div>
+
+		<h2>
+			<span class="js_typing">Modern Folk Song Club</span><br /><span
+				class="js_typing">Information</span
+			>
+		</h2>
+		<dl>
+			<dt>Follow Us</dt>
+			<dd>
+				<ul>
+					<li>
+						<a href="https://x.com/momotenguitar">
+							<svg
+								width="20"
+								height="20"
+								viewBox="0 0 1200 1227"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+									fill="white"></path>
+							</svg>
+						</a>
+					</li>
+					<li>
+						<a href="https://www.instagram.com/mfsc_modern/?hl=ja">
+							<img
+								src="/img/main/ico_insta.svg"
+								alt="Instagram"
+							/>
+						</a>
+					</li>
+				</ul>
+			</dd>
+		</dl>
+
+		<div class="scrolldown1"><span>Scroll</span></div>
+	</section>
+
+	<main id="main-area">
+		<canvas id="audioSpectrumCanvas"></canvas>
+
+		<section id="service">
+			<h2 class="js_typing">Main</h2>
+			<p class="service-lead">
+				<span class="bgextend bgRLextendTrigger">
+					<span class="bgappearTrigger"
+						>MFSCの活動状況を随時アップロードしていきますm(__)m</span
+					>
+				</span>
+			</p>
+
+			{/* 新入生ページへのリンク */}
+			<a href="/freshman" class="btnlinestretches2">新入生の皆様へ</a>
+
+			<div class="service-area">
+				<section class="bgextend bgLRextendTrigger">
+					<div class="bgappearTrigger">
+						<header>
+							<h3>GALLERY</h3>
+							<p>活動記録</p>
+						</header>
+						<p>
+							これまでに活動してきたライブ写真等を掲載しています。
+						</p>
+						<a href="/gallery" class="btnlinestretches2">More</a>
+					</div>
+				</section>
+
+				<section class="bgextend bgLRextendTrigger">
+					<div class="bgappearTrigger">
+						<header>
+							<h3>SCHEDULE</h3>
+							<p>年間行事予定</p>
+						</header>
+						<p>
+							学内・学外のライブ予定、過去の予定を掲載しています。
+						</p>
+						<a href="/schedule" class="btnlinestretches2">More</a>
+					</div>
+				</section>
+
+				<div class="service-img-wrapper bgextend bgLRextendTrigger">
+					<div class="bgappearTrigger">
+						<div class="service-img"></div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<div class="news-img-wrapper bgextend bgRLextendTrigger">
+			<div class="bgappearTrigger">
+				<div class="news-img"></div>
+			</div>
+		</div>
+
+		<section id="news">
+			<h2 class="js_typing">News</h2>
+			<div class="tab-area bgextend bgLRextendTrigger">
+				<div class="bgappearTrigger">
+					<ul class="tab">
+						<li class="active"><a href="#topics">Topics</a></li>
+					</ul>
+					<div class="tab-choice-area">
+						<div id="topics" class="area is-active">
+							<ul id="news-list">
+								{
+									response.contents.map((news) => (
+										<li>
+											<time datetime={news.date}>
+												{new Date(news.date)
+													.toLocaleDateString(
+														"ja-JP",
+														{
+															year: "numeric",
+															month: "2-digit",
+															day: "2-digit",
+														},
+													)
+													.replace(/\//g, ".")}
+											</time>
+
+											{/* タイトル表示部分 */}
+											{news.url ? (
+												<a
+													href={news.url}
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													{news.title}
+												</a>
+											) : (
+												<span>{news.title}</span>
+											)}
+										</li>
+									))
+								}
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="contact"></section>
+	</main>
+</Layout>

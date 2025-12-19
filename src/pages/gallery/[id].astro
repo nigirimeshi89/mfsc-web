@@ -1,0 +1,184 @@
+---
+// src/pages/gallery/[id].astro
+import Layout from "../../layouts/Layout.astro";
+import { createClient } from "microcms-js-sdk";
+
+// ▼ 1. 画像の定義を変更（「複数画像」タイプに合わせてシンプルに！）
+type GalleryImage = {
+    url: string;
+    height: number;
+    width: number;
+};
+
+// ▼ 2. ギャラリーデータの定義
+type Gallery = {
+    id: string;
+    title: string;
+    date: string;
+    images: GalleryImage[]; // 画像のリスト
+};
+
+// ▼ 3. 型定義
+interface Props {
+    gallery: Gallery;
+}
+
+// ▼ MicroCMS接続設定
+const client = createClient({
+    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+    apiKey: import.meta.env.MICROCMS_API_KEY,
+});
+
+export async function getStaticPaths() {
+    const client = createClient({
+        serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+        apiKey: import.meta.env.MICROCMS_API_KEY,
+    });
+
+    const response = await client.get({
+        endpoint: "galleries",
+        queries: { limit: 100 },
+    });
+
+    return response.contents.map((content: any) => ({
+        params: { id: content.id },
+        props: { gallery: content },
+    }));
+}
+
+const { gallery } = Astro.props;
+
+// 日付のフォーマット
+const d = new Date(gallery.date);
+const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+---
+
+<Layout title={gallery.title}>
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <h2>
+            <span class="js_typing">{formattedDate}</span><br /><span
+                class="js_typing">GALLERY</span>
+        </h2>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service1">
+            <h2 class="js_typing">{gallery.title}</h2>
+
+            <div class="gallery-container">
+                {/* 画像がある場合のみ表示 */}
+                {
+                    gallery.images && gallery.images.length > 0 ? (
+                        <ul class="gallery-grid">
+                            {gallery.images.map((item) => (
+                                <li>
+                                    <a
+                                        href={item.url}
+                                        data-lightbox="gallery"
+                                        data-title={gallery.title}
+                                    >
+                                        {/* ★変更点：ここも item.url です */}
+                                        <img
+                                            src={item.url}
+                                            alt="Gallery Image"
+                                            loading="lazy"
+                                        />
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p style="text-align:center; color:#fff;">
+                            写真がまだありません。
+                        </p>
+                    )
+                }
+            </div>
+
+            <div class="back-btn-area">
+                <a href="/gallery" class="btn04 bordercircle"
+                    ><span>一覧に戻る</span></a
+                >
+            </div>
+        </section>
+    </main>
+
+    <style>
+        /* === ギャラリーグリッドのデザイン === */
+        .gallery-container {
+            max-width: 1000px;
+            margin: 0 auto 50px auto;
+            padding: 0 20px;
+        }
+
+        .gallery-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px; /* 画像同士の隙間 */
+            justify-content: center;
+            list-style: none;
+            padding: 0;
+        }
+
+        .gallery-grid li {
+            width: calc(33.333% - 10px); /* 3列表示 */
+            aspect-ratio: 1 / 1; /* 正方形にトリミング */
+            overflow: hidden;
+            position: relative;
+        }
+
+        .gallery-grid li a {
+            display: block;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.3s;
+        }
+
+        .gallery-grid li a:hover {
+            opacity: 0.7;
+        }
+
+        .gallery-grid img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 枠いっぱいに広げる */
+            display: block;
+        }
+
+        /* 戻るボタン周り */
+        .back-btn-area {
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        /* ボタンデザイン */
+        .btn04 {
+            display: inline-block;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 10px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn04:hover {
+            background: #fff;
+            color: #333;
+        }
+
+        /* === スマホ対応 === */
+        @media (max-width: 768px) {
+            .gallery-grid li {
+                width: calc(50% - 10px); /* スマホは2列 */
+            }
+        }
+    </style>
+</Layout>

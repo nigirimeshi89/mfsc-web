@@ -1,0 +1,110 @@
+/* light-mode.css */
+
+/* body.light-mode でこれらの変数を上書き */
+body.light-mode {
+    --bg-color: #ffffff;
+    --text-color: #555555;
+    /* ライトモードのテキストをグレーに */
+    --accent-color: #2196f3;
+    /* 水色系 */
+    --hover-color: #64b5f6;
+    /* ホバー時の色 (明るめの水色) */
+
+    /* 新しい変数定義 for light mode */
+    --btn-line-color: #555555;
+
+    /* footerの色 */
+    --footer-text-color: #000000;
+
+    /* セクション背景やボーダーの色 */
+    --bg-color-service-area: #f5f5f5;
+    /* service-area::after の背景色 (ライトモード) */
+    --news-img-after-bg-color: #f0f0f0;
+    /* news-img::after の背景色 (ライトモードを薄いグレーに) */
+    --border-color: #ccc;
+    /* 各種ボーダーの色 (ライトモード) */
+    --box-bg-color: #f8f8f8;
+    /* .box (アコーディオンコンテンツ) の背景色 (ライトモード) */
+    --topic-area-bg-color: #f8f8f8;
+    /* #topics エリアの背景色（ライトモードは薄いグレー） */
+
+    /* ヘッダー・フッター・ナビの色 */
+    --header-bg-color: #e0e0e0;
+    /* ライトモードのヘッダー/g-nav背景色を薄いグレーに */
+    --footer-bg-color: #f0f8ff;
+    --link-color: #2196f3;
+    /* Header内のaタグの色 (例: H1のリンク) */
+    --header-h1-a-color: #333;
+    /* Header h1 a color in light mode */
+    --gnav-link-color: #333333;
+    /* g-nav文字色を濃いグレーに */
+    --gnav-openbtn-line-color: #333333;
+    /* ハンバーガーメニュー線の色 */
+
+    /* その他の要素の色 */
+    --dl-color: #555;
+    /* #vidual-area dl color in light mode */
+    --news-time-color: #555;
+    /* #news .area time color in light mode */
+    --new-tag-color: #2196f3;
+    /* .new p の色をライトモードのaccent-colorに */
+
+    /* アイコンの色 */
+    --social-icon-color: #333;
+    /* ライトモードでは濃い色に */
+    --search-open-btn-color: #ffffff;
+    /* アイコン自体は白にして背景とのコントラストを出す */
+    --search-open-btn-bg-color: #555555;
+    /* 背景を濃いグレーに */
+
+    /* Twitterウィジェットの色 */
+    --twitter-widget-bg-color: #ffffff;
+
+    /* Tab関連の色 */
+    --tab-bg-color: #f0f0f0;
+    /* Tabのデフォルト背景色 */
+    --tab-border-color: #ccc;
+    /* Tabのボーダー色 */
+    --tab-active-bg-color: #f8f8f8;
+    /* アクティブなTabの背景色 */
+    --tab-active-border-color: #999;
+    /* アクティブなTabのボーダー色 */
+
+    /* 伸びる背景アニメーションの色 */
+    --bgextend-bg-color: #f0f0f0;
+    /* ライトモードでは薄いグレー */
+
+    /* ギャラリーリンクのホバー色（ライトモードをダークモードに寄せる） */
+    --gallery-link-text-color: #555555;
+    /* 通常時はテーマのテキスト色（グレー） */
+    --gallery-link-hover-color: #eeeeee;
+    /* ホバー時は明るい色（白系） */
+    --gallery-link-bg-color: transparent;
+    /* 通常時の背景は透明（見やすければ薄いグレーでも可） */
+    --gallery-link-hover-bg-color: #666666;
+    /* ホバー時の背景を濃いグレーに */
+
+    /* ソートボタンの文字色 */
+    --sort-btn-text-color: #ffffff;
+    /* 変更点: ソートボタンの文字色を白に固定 (ライトモード) */
+    /* ソートボタンのアクティブ/通常時の背景色 (ライトモード) */
+    --sort-btn-bg-color: #565656;
+    /* 通常時の背景色を固定 */
+    --sort-btn-active-bg-color: var(--accent-color);
+    /* 変更点: アクティブ時はライトモードのaccent-color（水色） */
+}
+
+/* LIVE.html のタブコンテンツ内のリンク色をライトモードで濃いグレーにする */
+body.light-mode ul.gnavi li a {
+    color: #555555;
+    /* 濃いグレーに設定 */
+}
+
+/* ホバー時の背景色を水色に変更し、文字色はそのまま */
+body.light-mode ul.gnavi li a:hover {
+    color: #555555;
+    /* 文字色は濃いグレーのまま維持 */
+    background-color: var(--accent-color);
+    /* ホバー時の背景色を水色に設定 */
+    /* ホバー時の文字色を #eeeeee (白系) にすることも可能だが、今回は #555555 のまま */
+}

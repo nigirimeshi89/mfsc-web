@@ -1,0 +1,201 @@
+/* css/theme/theme-common.css */
+/* テーマ間で共通のスタイル定義（色の値はCSS変数を使用） */
+
+/* body の背景色と文字色 */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    /* スムーズな切り替え */
+
+    /* 新しい変数定義 for dark mode default */
+    --btn-line-color: #eeeeee;
+}
+
+/* header, footer の背景色と文字色 */
+header,
+footer {
+    background-color: var(--header-bg-color);
+    color: var(--footer-text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* a タグの色 */
+a {
+    color: var(--dl-color);
+    transition: color 0.3s;
+}
+
+/* a タグのホバー時の色 */
+a:hover {
+    color: lightgray;
+    transition: color 0.3s;
+}
+
+/* ナビゲーションの背景色 */
+#g-nav {
+    background-color: var(--header-bg-color);
+    transition: background-color 0.3s;
+}
+
+/* g-nav 内の a タグに文字色を適用 */
+#g-nav a {
+    color: var(--gnav-link-color);
+    transition: color 0.3s;
+}
+
+/* ハンバーガーメニュー線の色 */
+.g-nav-openbtn span {
+    background-color: var(--gnav-openbtn-line-color);
+    transition: background-color 0.3s;
+}
+
+/* ボタンのホバー時の背景色 */
+body .btnlinestretches2:hover {
+    background-color: var(--hover-color);
+    transition: background-color 0.3s;
+}
+
+/* vidual-area h1 a の色 */
+#header h1 a {
+    color: var(--header-h1-a-color);
+    transition: color 0.3s;
+}
+
+/* vidual-area dl の色 */
+#vidual-area dl {
+    color: var(--dl-color);
+    transition: color 0.3s;
+}
+
+/* news .area time の色 */
+#news .area time {
+    color: var(--news-time-color);
+    transition: color 0.3s;
+}
+
+/* 各種ボーダーの色 */
+#news .tab-choice-area {
+    border-top: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    transition: border-color 0.3s;
+}
+
+#contact {
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.3s;
+}
+
+#contact .contact-detail {
+    border-right: 1px solid var(--border-color);
+    transition: border-color 0.3s;
+}
+
+#contact .contact-tel p:last-child {
+    border-top: 1px solid var(--border-color);
+    transition: border-color 0.3s;
+}
+
+#footer .footer-info {
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.3s;
+}
+
+/* freshamn a:hover */
+.freshman a:hover {
+    color: var(--hover-color);
+    transition: color 0.3s;
+}
+
+/* freshamn a::after */
+.freshman a::after {
+    background: var(--accent-color);
+    transition: background 0.3s;
+}
+
+/* h2 .command */
+h2 .command {
+    color: var(--accent-color);
+    transition: color 0.3s;
+}
+
+/* new p */
+.new p {
+    color: var(--new-tag-color);
+    transition: color 0.3s;
+}
+
+/* SVGアイコンの色を制御するCSSルールを追加 */
+#vidual-area dl dd ul li svg path {
+    fill: var(--social-icon-color);
+    transition: fill 0.3s;
+}
+
+/* Twitter埋め込みウィジェットの背景色をテーマに合わせて変更 */
+blockquote.twitter-tweet {
+    background-color: var(--twitter-widget-bg-color) !important;
+    border-color: var(--border-color) !important;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+blockquote.twitter-tweet p {
+    color: var(--text-color) !important;
+}
+
+blockquote.twitter-tweet a {
+    color: var(--accent-color) !important;
+}
+
+/* #topics エリアの背景色 */
+#topics.area {
+    background-color: var(--topic-area-bg-color);
+    transition: background-color 0.3s;
+}
+
+/* .gnavi内のh3要素の色をテーマテキストに連動 */
+.gnavi h3 {
+    color: var(--text-color);
+    transition: color 0.3s;
+}
+
+/* ギャラリーリンクのスタイル（.title1 h3を含むリンク） */
+.gnavi li a {
+    display: block;
+    text-decoration: none;
+    padding: 10px 20px;
+    background-color: var(--gallery-link-bg-color);
+    border: 1px solid var(--border-color);
+    margin-bottom: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.gnavi li a:hover {
+    background-color: var(--gallery-link-hover-bg-color);
+    border-color: var(--gallery-link-hover-color);
+}
+
+/* .title1 h3 の色をテーマテキストに連動させ、ホバー時のスタイルを追加 */
+.title1 h3 {
+    color: var(--gallery-link-text-color);
+    transition: color 0.3s;
+    margin: 0;
+    padding: 0;
+}
+
+.gnavi li a:hover .title1 h3 {
+    color: var(--gallery-link-hover-color);
+}
+
+/* ソートボタンの文字色と背景色 */
+.sort-btn li {
+    color: var(--sort-btn-text-color);
+    background-color: var(--sort-btn-bg-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sort-btn li.active {
+    background-color: var(--sort-btn-active-bg-color);
+    color: var(--sort-btn-text-color);
+}
