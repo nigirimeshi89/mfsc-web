@@ -1,0 +1,119 @@
+---
+// src/pages/freshman.astro
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="FRESHMAN | MFSC">
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+
+        <h2>
+            <span class="js_typing">Modern Folk Song Club</span><br />
+            <span class="js_typing">Information</span>
+        </h2>
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar"
+                            ><svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                ><path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path></svg
+                            ></a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja"
+                            ><img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            /></a>
+                    </li>
+                </ul>
+            </dd>
+        </dl>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service">
+            <h2 class="js_typing">
+                <div class="command">Congratulations on entering school!</div>
+            </h2>
+
+            <div class="main-info">
+                <p>
+                    モダンフォークソングクラブは音楽団体の中で一番歴史が長い団体です。モダンフォークと名前がついていますが、<br
+                    />
+                    ロックやJポップなどジャンル問わず活動しています。<br />
+                    また、他の音楽団体との違いとして、渉外校との交流があります。千葉工業大学、川村学園女子大学、和洋女子大学、中央学院大学と<br
+                    />
+                    渉外関係にあり、外のライブハウスを使ってライブを行っています。学内でのつながりはもちろん、他大学とのつながりもあるので、<br
+                    />
+                    自分のやりたい音楽が共有しやすいという点がモダンフォークソングクラブの一番の強みです。<br
+                    />
+                    経験者、未経験者大歓迎ですので、クラブ棟2階にぜひ来てみてください！<br
+                    />
+                    部員一同、心からお待ちしております!!<br />
+                </p>
+
+                <img class="pc" src="/img/main/MFSC紹介.jpg" alt="MFSC紹介" />
+                <img
+                    class="pc"
+                    src="/img/main/パンフ.jpg"
+                    alt="パンフレット1"
+                />
+                <img
+                    class="pc2"
+                    src="/img/main/パンフ2.jpg"
+                    alt="パンフレット2"
+                />
+
+                <img class="sp" src="/img/main/MFSC紹介.jpg" alt="MFSC紹介" />
+                <img
+                    class="sp"
+                    src="/img/main/パンフ.jpg"
+                    alt="パンフレット1"
+                />
+                <img
+                    class="sp"
+                    src="/img/main/パンフ2.jpg"
+                    alt="パンフレット2"
+                />
+            </div>
+        </section>
+    </main>
+
+    <style>
+        /* 追加のCSSが必要な場合はここに書きますが、
+       今回は main.css のクラス（pc, sp, main-infoなど）をそのまま使うので
+       特に追加はありません。 */
+
+        .main-info {
+            padding: 0 20px;
+            max-width: 1000px;
+            margin: 0 auto 100px auto;
+            text-align: center;
+            color: #fff;
+            line-height: 2;
+        }
+
+        .main-info img {
+            width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+    </style>
+</Layout>
