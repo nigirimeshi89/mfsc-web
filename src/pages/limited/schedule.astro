@@ -1,8 +1,8 @@
 ---
-// src/pages/schedule.astro
-import Layout from "../layouts/Layout.astro";
-import { client } from "../lib/microcms";
-import type { MicroCMSListResponse } from "../lib/microcms";
+// src/pages/limited/schedule.astro
+import Layout from "../../layouts/Layout.astro";
+import { client } from "../../lib/microcms";
+import type { MicroCMSListResponse } from "../../lib/microcms";
 
 // ▼ スケジュールデータの設計図
 type Schedule = {
@@ -16,13 +16,10 @@ type Schedule = {
     isLimited?: boolean;
 };
 
-// ▼ データを取得（限定以外）
+// ▼ データを取得
 const response = await client.get<MicroCMSListResponse<Schedule>>({
     endpoint: "schedules",
-    queries: {
-        limit: 100,
-        filters: "isLimited[not_equals]true",
-    },
+    queries: { limit: 100 },
 });
 
 // ▼ 月の並び順
@@ -59,7 +56,7 @@ response.contents.forEach((s) => {
 
 // ▼▼▼ 並び替えのためのスコア計算関数（修正版） ▼▼▼
 const getSortScore = (event: Schedule) => {
-    // ★修正ポイント：安全装置を追加
+    // ★修正ポイント：timingが無い(undefined)場合は空文字にする安全装置
     const timingText = event.timing || "";
 
     // 1. 時期スコア（小さいほど上）
@@ -69,6 +66,7 @@ const getSortScore = (event: Schedule) => {
     else if (timingText.includes("下旬")) timingScore = 30;
 
     // 2. 種類スコア（小さいほど上）
+    // 学内(一般)=1, 学内(限定)=2, 渉外=3, その他=4
     let typeScore = 4;
     const typeName = event.type && event.type.length > 0 ? event.type[0] : "";
 
@@ -110,7 +108,7 @@ const groupAndSortEvents = (events: Schedule[]) => {
 };
 ---
 
-<Layout title="SCHEDULE">
+<Layout title="LIMITED_SCHEDULE" isLimited={true}>
     <div id="header-placeholder"></div>
 
     <section id="vidual-area">
@@ -120,8 +118,8 @@ const groupAndSortEvents = (events: Schedule[]) => {
             </div>
         </div>
         <h2>
-            <span class="js_typing">Modern Folk Song Club</span><br /><span
-                class="js_typing">Schedule</span
+            <span class="js_typing">Members Only</span><br /><span
+                class="js_typing">Secret Schedule</span
             >
         </h2>
         <div class="scrolldown1"><span>Scroll</span></div>
@@ -129,9 +127,10 @@ const groupAndSortEvents = (events: Schedule[]) => {
 
     <main id="main-area">
         <section id="service1">
-            <h2 class="js_typing">SCHEDULE</h2>
+            <h2 class="js_typing">INTERNAL SCHEDULE</h2>
             <p style="text-align:center; margin-bottom:40px;">
-                年間活動予定です。<br />ライブの日程などをチェック！
+                部員用スケジュール（全体＋内部予定）です。<br />
+                同じイベント名のものはまとめて表示されます。
             </p>
 
             <section class="details-wrapper">
@@ -168,7 +167,9 @@ const groupAndSortEvents = (events: Schedule[]) => {
                                                         <div class="group-content">
                                                             {group.items.map(
                                                                 (event) => (
-                                                                    <div class="sub-event-row">
+                                                                    <div
+                                                                        class={`sub-event-row ${event.isLimited ? "is-limited" : ""}`}
+                                                                    >
                                                                         <div class="sub-event-info">
                                                                             {event.url ? (
                                                                                 <a
@@ -193,6 +194,12 @@ const groupAndSortEvents = (events: Schedule[]) => {
                                                                                     {
                                                                                         event.timing
                                                                                     }
+                                                                                </span>
+                                                                            )}
+
+                                                                            {event.isLimited && (
+                                                                                <span class="mini-badge">
+                                                                                    🔒
                                                                                 </span>
                                                                             )}
                                                                         </div>
@@ -335,6 +342,11 @@ const groupAndSortEvents = (events: Schedule[]) => {
         .sub-event-row:last-child {
             border-bottom: none;
         }
+        .sub-event-row.is-limited {
+            background: rgba(217, 83, 79, 0.05);
+            margin: 0 -15px;
+            padding: 10px 15px;
+        }
         .sub-event-info {
             display: flex;
             align-items: center;
@@ -390,6 +402,10 @@ const groupAndSortEvents = (events: Schedule[]) => {
             font-size: 0.75rem;
             border-radius: 4px;
         }
+        .mini-badge {
+            font-size: 0.8rem;
+            cursor: help;
+        }
         .no-event {
             color: #666;
             font-size: 0.9rem;
@@ -428,6 +444,10 @@ const groupAndSortEvents = (events: Schedule[]) => {
         :global(body.light-mode) .sub-event-row,
         :global(body.light) .sub-event-row {
             border-bottom-color: #eee;
+        }
+        :global(body.light-mode) .sub-event-row.is-limited,
+        :global(body.light) .sub-event-row.is-limited {
+            background: rgba(255, 153, 0, 0.05);
         }
         :global(body.light-mode) .timing,
         :global(body.light) .timing {

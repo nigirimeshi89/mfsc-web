@@ -1,0 +1,430 @@
+---
+// src/pages/limited/index.astro
+import Layout from "../../layouts/Layout.astro";
+
+// ▼ 共通ファイルから読み込み（階層注意: ../../）
+import { client } from "../../lib/microcms";
+import type { MicroCMSListResponse } from "../../lib/microcms";
+
+type News = {
+    id: string;
+    title: string;
+    date: string;
+    url?: string;
+};
+
+// ▼ ニュース取得
+const response = await client.get<MicroCMSListResponse<News>>({
+    endpoint: "news",
+    queries: { fields: ["id", "title", "date", "url"] },
+});
+---
+
+<Layout title="LIMITED_MAIN" isLimited={true}>
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+
+        <h2>
+            <span class="js_typing">Modern Folk Song Club</span><br /><span
+                class="js_typing">Limited</span
+            >
+        </h2>
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar">
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path>
+                            </svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja">
+                            <img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            />
+                        </a>
+                    </li>
+                </ul>
+            </dd>
+        </dl>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service">
+            <h2 class="js_typing">Members Only</h2>
+
+            <p class="service-lead">
+                <span class="bgextend bgRLextendTrigger">
+                    <span class="bgappearTrigger">
+                        こちらは部員限定エリアです。
+                    </span>
+                </span>
+            </p>
+
+            <div class="limited-menu-container">
+                <a
+                    href="/limited/members"
+                    class="menu-card bgextend bgLRextendTrigger"
+                >
+                    <div class="bgappearTrigger card-inner">
+                        <div class="card-icon">
+                            <img src="/img/main/top1.jpg" alt="Member Icon" />
+                        </div>
+                        <div class="card-content">
+                            <h3>MEMBERS</h3>
+                            <p>部員紹介</p>
+                        </div>
+                        <div class="card-arrow">→</div>
+                    </div>
+                </a>
+
+                <a
+                    href="/limited/gallery"
+                    class="menu-card bgextend bgLRextendTrigger"
+                >
+                    <div class="bgappearTrigger card-inner">
+                        <div class="card-icon">
+                            <img src="/img/main/top2.jpg" alt="Gallery Icon" />
+                        </div>
+                        <div class="card-content">
+                            <h3>GALLERY</h3>
+                            <p>活動写真</p>
+                        </div>
+                        <div class="card-arrow">→</div>
+                    </div>
+                </a>
+
+                <a
+                    href="/limited/live"
+                    class="menu-card bgextend bgLRextendTrigger"
+                >
+                    <div class="bgappearTrigger card-inner">
+                        <div class="card-icon">
+                            <img src="/img/main/top3.jpg" alt="Live Icon" />
+                        </div>
+                        <div class="card-content">
+                            <h3>LIVE ARCHIVE</h3>
+                            <p>ライブ情報</p>
+                        </div>
+                        <div class="card-arrow">→</div>
+                    </div>
+                </a>
+
+                <a
+                    href="/limited/schedule"
+                    class="menu-card bgextend bgLRextendTrigger"
+                >
+                    <div class="bgappearTrigger card-inner">
+                        <div class="card-icon">
+                            <img src="/img/main/top4.jpg" alt="Schedule Icon" />
+                        </div>
+                        <div class="card-content">
+                            <h3>SCHEDULE</h3>
+                            <p>スケジュール</p>
+                        </div>
+                        <div class="card-arrow">→</div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section id="news">
+            <h2 class="js_typing">News</h2>
+            <div class="tab-area bgextend bgLRextendTrigger">
+                <div class="bgappearTrigger">
+                    <ul class="tab">
+                        <li class="active"><a href="#topics">Topics</a></li>
+                    </ul>
+                    <div class="tab-choice-area">
+                        <div id="topics" class="area is-active">
+                            <ul id="news-list">
+                                {
+                                    response.contents.map((news) => (
+                                        <li>
+                                            <time datetime={news.date}>
+                                                {new Date(news.date)
+                                                    .toLocaleDateString(
+                                                        "ja-JP",
+                                                        {
+                                                            year: "numeric",
+                                                            month: "2-digit",
+                                                            day: "2-digit",
+                                                        },
+                                                    )
+                                                    .replace(/\//g, ".")}
+                                            </time>
+                                            {news.url ? (
+                                                <a
+                                                    href={news.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    {news.title}
+                                                </a>
+                                            ) : (
+                                                <span>{news.title}</span>
+                                            )}
+                                        </li>
+                                    ))
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact"></section>
+    </main>
+
+    <style>
+        .limited-menu-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        /* --------------------------------------------------
+         * ▼▼▼ デフォルト（ダークモード）のデザイン ▼▼▼
+         * -------------------------------------------------- */
+        .menu-card {
+            display: block;
+            text-decoration: none;
+            color: #fff;
+            background: #222;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition:
+                transform 0.3s,
+                box-shadow 0.3s,
+                background 0.3s;
+            position: relative;
+        }
+
+        .menu-card .bgappearTrigger {
+            height: 100%;
+        }
+
+        .card-inner {
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.05);
+            height: 100%;
+            border-left: 5px solid #555;
+            transition: all 0.3s;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .menu-card:hover .card-inner {
+            border-left-color: #b22222;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ▼▼▼ アイコン画像の円形切り抜き設定（エラー修正済み） ▼▼▼ */
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            margin-right: 20px;
+            border-radius: 50%; /* ここが修正ポイント */
+            overflow: hidden;
+            border: 2px solid #555;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition:
+                border-color 0.3s,
+                transform 0.3s;
+        }
+
+        .card-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .menu-card:hover .card-icon {
+            border-color: #b22222;
+            transform: scale(1.1);
+        }
+
+        .card-content {
+            flex-grow: 1;
+        }
+        .card-content h3 {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 0;
+            font-family: "Oswald", sans-serif;
+            letter-spacing: 0.05em;
+            color: #fff;
+            transition: color 0.3s;
+        }
+        .card-content p {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin: 5px 0 0;
+            transition: color 0.3s;
+        }
+
+        .card-arrow {
+            font-size: 1.5rem;
+            color: #555;
+            margin-left: 15px;
+            transition:
+                transform 0.3s,
+                color 0.3s;
+        }
+        .menu-card:hover .card-arrow {
+            color: #b22222;
+            transform: translateX(5px);
+        }
+
+        /* --------------------------------------------------
+         * ▼▼▼ ライトモード時の上書き設定 ▼▼▼
+         * -------------------------------------------------- */
+        :global(body.light-mode) .menu-card,
+        :global(body.light) .menu-card {
+            background: #fff;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        :global(body.light-mode) .card-inner,
+        :global(body.light) .card-inner {
+            background: rgba(0, 0, 0, 0.02);
+            border-left-color: #ccc;
+        }
+
+        :global(body.light-mode) .menu-card:hover,
+        :global(body.light) .menu-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 102, 204, 0.2);
+        }
+        :global(body.light-mode) .menu-card:hover .card-inner,
+        :global(body.light) .menu-card:hover .card-inner {
+            border-left-color: #0066cc;
+            background: #fff;
+        }
+
+        :global(body.light-mode) .card-content h3,
+        :global(body.light) .card-content h3 {
+            color: #333;
+        }
+        :global(body.light-mode) .card-content p,
+        :global(body.light) .card-content p {
+            color: #666;
+        }
+
+        :global(body.light-mode) .card-icon,
+        :global(body.light) .card-icon {
+            border-color: #ccc;
+        }
+        :global(body.light-mode) .menu-card:hover .card-icon,
+        :global(body.light) .menu-card:hover .card-icon {
+            border-color: #0066cc;
+        }
+
+        :global(body.light-mode) .card-arrow,
+        :global(body.light) .card-arrow {
+            color: #ccc;
+        }
+        :global(body.light-mode) .menu-card:hover .card-arrow,
+        :global(body.light) .menu-card:hover .card-arrow {
+            color: #0066cc;
+        }
+
+        @media (max-width: 768px) {
+            .limited-menu-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .card-inner {
+                padding: 20px;
+            }
+            .card-icon {
+                width: 50px;
+                height: 50px;
+                margin-right: 15px;
+            }
+            .card-content h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+
+    <script is:inline>
+        $(window).on("load", function () {
+            setTimeout(function () {
+                $("#slider").vegas("destroy");
+
+                var windowwidth =
+                    window.innerWidth ||
+                    document.documentElement.clientWidth ||
+                    0;
+                var responsiveImage = [];
+
+                if (windowwidth > 768) {
+                    // PC用 (top8 ～ top13)
+                    responsiveImage = [
+                        { src: "/img/main/top8.jpg" },
+                        { src: "/img/main/top9.jpg" },
+                        { src: "/img/main/top10.jpg" },
+                        { src: "/img/main/top11.jpg" },
+                        { src: "/img/main/top12.jpg" },
+                        { src: "/img/main/top13.jpg" },
+                    ];
+                } else {
+                    // スマホ用 (top1 ～ top6)
+                    responsiveImage = [
+                        { src: "/img/main/top1.jpg" },
+                        { src: "/img/main/top2.jpg" },
+                        { src: "/img/main/top3.jpg" },
+                        { src: "/img/main/top4.jpg" },
+                        { src: "/img/main/top5.jpg" },
+                        { src: "/img/main/top6.jpg" },
+                    ];
+                }
+
+                $("#slider").vegas({
+                    overlay: false,
+                    transition: "fade2",
+                    transitionDuration: 1500,
+                    delay: 4000,
+                    animationDuration: 1500,
+                    animation: "random",
+                    slides: responsiveImage,
+                    timer: false,
+                });
+            }, 100);
+        });
+    </script>
+</Layout>

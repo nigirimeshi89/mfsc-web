@@ -1,10 +1,31 @@
 ---
 // src/layouts/Layout.astro
+
+// ★ここにCSSを読み込む（これでAstroが処理してくれます）
+import "../styles/main.css";
+
 interface Props {
 	title: string;
+	isLimited?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, isLimited = false } = Astro.props;
+const homeLink = isLimited ? "/limited" : "/";
+
+const navLinks = isLimited
+	? [
+			{ name: "Top", href: "/limited" },
+			{ name: "Gallery", href: "/limited/gallery" },
+			{ name: "Live", href: "/limited/live" },
+			{ name: "Schedule", href: "/limited/schedule" },
+			{ name: "Member", href: "/limited/members" },
+	  ]
+	: [
+			{ name: "Top", href: "/" },
+			{ name: "Gallery", href: "/gallery" },
+			{ name: "Schedule", href: "/schedule" },
+			{ name: "Member", href: "/member" },
+	  ];
 ---
 
 <!doctype html>
@@ -23,7 +44,6 @@ const { title } = Astro.props;
 			href="https://fonts.googleapis.com/css?family=Noto+Sans+JP%7COswald&display=swap"
 			rel="stylesheet"
 		/>
-
 		<link
 			rel="stylesheet"
 			type="text/css"
@@ -33,26 +53,103 @@ const { title } = Astro.props;
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.10.0/css/lightbox.min.css"
 		/>
-
 		<link
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css"
 		/>
-
-		<link rel="stylesheet" type="text/css" href="/css/main.css" />
+		{/* ★削除：<link rel="stylesheet" type="text/css" href="/css/main.css" /> はもう不要です */}
 	</head>
-	<body>
+
+	<body class={isLimited ? "limited-mode" : ""}>
 		<div id="page-transition-overlay" class="initial-load-active">
 			<canvas id="transitionSpectrumCanvas"></canvas>
 			<div id="spectrum-center-text"></div>
 		</div>
 
 		<div id="container">
-			<div id="header-placeholder"></div>
+			<header id="header">
+				<h1>
+					<a href={homeLink}>Trajectory of Modern</a>
+				</h1>
+				<div class="g-nav-openbtn">
+					<div class="openbtn-area">
+						<span></span><span></span><span></span>
+					</div>
+				</div>
+				<nav id="g-nav">
+					<div id="g-nav-list">
+						<ul id="g-navi" class="nav01c">
+							{
+								navLinks.map((link) => (
+									<li>
+										<a href={link.href}>{link.name}</a>
+									</li>
+								))
+							}
+						</ul>
+					</div>
+				</nav>
+
+				{
+					!isLimited ? (
+						<div class="search-open-btn" />
+					) : (
+						<a href="/" class="exit-btn" title="一般ページに戻る">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+								<polyline points="16 17 21 12 16 7" />
+								<line x1="21" y1="12" x2="9" y2="12" />
+							</svg>
+						</a>
+					)
+				}
+			</header>
+
+			{
+				!isLimited && (
+					<div id="search-wrap">
+						<div class="close-btn">
+							<span />
+							<span />
+						</div>
+						<div class="search-area">
+							<form id="login_form">
+								<input
+									type="password"
+									id="pass"
+									placeholder="Password"
+									autocomplete="off"
+								/>
+							</form>
+						</div>
+					</div>
+				)
+			}
 
 			<slot />
 
-			<div id="footer-placeholder"></div>
+			<footer id="footer">
+				<div class="footer-info">
+					<p class="footer-logo">日本工業大学</p>
+					<address>
+						〒345-8501 埼玉県南埼玉郡宮代町学園台4-1<br />
+						クラブ棟2階207号室
+					</address>
+				</div>
+				<div class="footer-link">
+					<small>&copy; Modern Folk Song Club</small>
+				</div>
+			</footer>
 		</div>
 
 		<button id="modeToggle" class="mode-toggle">
@@ -64,12 +161,39 @@ const { title } = Astro.props;
 			/>
 		</button>
 
+		<style>
+			.exit-btn {
+				position: fixed;
+				top: 10px;
+				right: 10px;
+				z-index: 999;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 50px;
+				height: 50px;
+				color: #fff;
+				background: #b22222;
+				border-radius: 50%;
+				transition: all 0.3s;
+				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+			}
+
+			.exit-btn:hover {
+				background: #ff4444;
+				transform: scale(1.1);
+			}
+
+			:global(body.light-mode) .exit-btn {
+				background: #0056b3;
+			}
+		</style>
+
 		<script
 			is:inline
 			src="https://code.jquery.com/jquery-3.4.1.min.js"
 			integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
 			crossorigin="anonymous"></script>
-
 		<script
 			is:inline
 			src="https://cdnjs.cloudflare.com/ajax/libs/vegas/2.4.4/vegas.min.js"
@@ -82,13 +206,40 @@ const { title } = Astro.props;
 			is:inline
 			src="https://cdn.jsdelivr.net/npm/shuffle-text@0.3.0/build/shuffle-text.min.js"
 		></script>
-
 		<script
 			is:inline
 			src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"
 		></script>
-
+		
+		{/* JavaScriptファイルも移動を検討できますが、ひとまずそのままでOKです */}
 		<script is:inline src="/js/parts/layout.js"></script>
 		<script is:inline src="/js/main.js"></script>
+
+		{
+			!isLimited && (
+				<script is:inline>
+					$(function () {
+						const form = document.getElementById("login_form");
+						const passInput = document.getElementById("pass");
+						if (form && passInput) {
+							form.addEventListener("submit", (e) => {
+								e.preventDefault();
+								checkPassword();
+							});
+							function checkPassword() {
+								if (passInput.value === "888000") {
+									window.location.href = "/limited";
+								}
+							}
+							passInput.addEventListener("keyup", function (event) {
+								if (event.key === "Enter") {
+									checkPassword();
+								}
+							});
+						}
+					});
+				</script>
+			)
+		}
 	</body>
 </html>

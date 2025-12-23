@@ -2,11 +2,10 @@
 // src/pages/index.astro
 import Layout from "../layouts/Layout.astro";
 
-// ▼ MicroCMSの道具箱
-import { createClient } from "microcms-js-sdk";
-import type { MicroCMSListResponse } from "microcms-js-sdk";
+// ▼▼▼ 変更点：共通化したファイルから読み込む（Step 3） ▼▼▼
+import { client } from "../lib/microcms";
+import type { MicroCMSListResponse } from "../lib/microcms";
 
-// ▼ ニュースの設計図
 type News = {
 	id: string;
 	title: string;
@@ -14,13 +13,9 @@ type News = {
 	url?: string;
 };
 
-// ▼ MicroCMSに接続
-const client = createClient({
-	serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-	apiKey: import.meta.env.MICROCMS_API_KEY,
-});
+// ▼▼▼ 削除：ここで createClient する記述は不要になりました ▼▼▼
+// const client = createClient({ ... });
 
-// ▼ データを取得
 const response = await client.get<MicroCMSListResponse<News>>({
 	endpoint: "news",
 	queries: { fields: ["id", "title", "date", "url"] },
@@ -29,6 +24,20 @@ const response = await client.get<MicroCMSListResponse<News>>({
 
 <Layout title="MAIN">
 	<div id="header-placeholder"></div>
+
+	<div id="search-wrap">
+		<div class="close-btn"><span></span><span></span></div>
+		<div class="search-area">
+			<form id="login_form">
+				<input
+					type="password"
+					id="pass"
+					placeholder="Enter Secret Code..."
+					autocomplete="off"
+				/>
+			</form>
+		</div>
+	</div>
 
 	<section id="vidual-area">
 		<div id="slider-area" class="bgextend bgRLextendTrigger">
@@ -47,38 +56,35 @@ const response = await client.get<MicroCMSListResponse<News>>({
 			<dd>
 				<ul>
 					<li>
-						<a href="https://x.com/momotenguitar">
-							<svg
+						<a href="https://x.com/momotenguitar"
+							><svg
 								width="20"
 								height="20"
 								viewBox="0 0 1200 1227"
 								fill="none"
 								xmlns="http://www.w3.org/2000/svg"
-							>
-								<path
+								><path
 									d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
-									fill="white"></path>
-							</svg>
-						</a>
+									fill="white"></path></svg
+							></a
+						>
 					</li>
 					<li>
-						<a href="https://www.instagram.com/mfsc_modern/?hl=ja">
-							<img
+						<a href="https://www.instagram.com/mfsc_modern/?hl=ja"
+							><img
 								src="/img/main/ico_insta.svg"
 								alt="Instagram"
-							/>
-						</a>
+							/></a
+						>
 					</li>
 				</ul>
 			</dd>
 		</dl>
-
 		<div class="scrolldown1"><span>Scroll</span></div>
 	</section>
 
 	<main id="main-area">
 		<canvas id="audioSpectrumCanvas"></canvas>
-
 		<section id="service">
 			<h2 class="js_typing">Main</h2>
 			<p class="service-lead">
@@ -89,16 +95,12 @@ const response = await client.get<MicroCMSListResponse<News>>({
 				</span>
 			</p>
 
-			{/* 新入生ページへのリンク */}
 			<a href="/freshman" class="btnlinestretches2">新入生の皆様へ</a>
 
 			<div class="service-area">
 				<section class="bgextend bgLRextendTrigger">
 					<div class="bgappearTrigger">
-						<header>
-							<h3>GALLERY</h3>
-							<p>活動記録</p>
-						</header>
+						<header><h3>GALLERY</h3><p>活動記録</p></header>
 						<p>
 							これまでに活動してきたライブ写真等を掲載しています。
 						</p>
@@ -108,17 +110,13 @@ const response = await client.get<MicroCMSListResponse<News>>({
 
 				<section class="bgextend bgLRextendTrigger">
 					<div class="bgappearTrigger">
-						<header>
-							<h3>SCHEDULE</h3>
-							<p>年間行事予定</p>
-						</header>
+						<header><h3>SCHEDULE</h3><p>年間行事予定</p></header>
 						<p>
 							学内・学外のライブ予定、過去の予定を掲載しています。
 						</p>
 						<a href="/schedule" class="btnlinestretches2">More</a>
 					</div>
 				</section>
-
 				<div class="service-img-wrapper bgextend bgLRextendTrigger">
 					<div class="bgappearTrigger">
 						<div class="service-img"></div>
@@ -128,9 +126,7 @@ const response = await client.get<MicroCMSListResponse<News>>({
 		</section>
 
 		<div class="news-img-wrapper bgextend bgRLextendTrigger">
-			<div class="bgappearTrigger">
-				<div class="news-img"></div>
-			</div>
+			<div class="bgappearTrigger"><div class="news-img"></div></div>
 		</div>
 
 		<section id="news">
@@ -158,8 +154,6 @@ const response = await client.get<MicroCMSListResponse<News>>({
 													)
 													.replace(/\//g, ".")}
 											</time>
-
-											{/* タイトル表示部分 */}
 											{news.url ? (
 												<a
 													href={news.url}
@@ -180,7 +174,38 @@ const response = await client.get<MicroCMSListResponse<News>>({
 				</div>
 			</div>
 		</section>
-
 		<section id="contact"></section>
 	</main>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", () => {
+			const form = document.getElementById("login_form");
+			const passInput = document.getElementById("pass"); // type="password"
+
+			if (form && passInput) {
+				// エンターキーでの送信を防ぐ
+				form.addEventListener("submit", (e) => {
+					e.preventDefault();
+					checkPassword();
+				});
+
+				// パスワードチェック関数
+				function checkPassword() {
+					// @ts-ignore
+					const val = passInput.value;
+					if (val === "888000") {
+						// 一致したら limited ページへ
+						window.location.href = "/limited";
+					}
+				}
+
+				// キー入力検知
+				passInput.addEventListener("keyup", function (event) {
+					if (event.key === "Enter") {
+						checkPassword();
+					}
+				});
+			}
+		});
+	</script>
 </Layout>

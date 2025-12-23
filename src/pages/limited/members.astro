@@ -1,11 +1,11 @@
 ---
-// src/pages/member.astro
-import Layout from "../layouts/Layout.astro";
+// src/pages/limited/members.astro
+import Layout from "../../layouts/Layout.astro";
 
-// ▼ 共通ファイルから読み込み
-import { client } from "../lib/microcms";
-import type { MicroCMSListResponse } from "../lib/microcms";
-import { getSchoolYear, normalizePart } from "../utils/memberHelper";
+// ▼▼▼ 変更点：共通ファイルから読み込み（階層が深いので ../../ です！） ▼▼▼
+import { client } from "../../lib/microcms";
+import type { MicroCMSListResponse } from "../../lib/microcms";
+import { getSchoolYear, normalizePart } from "../../utils/memberHelper";
 
 // ▼ 部員の設計図
 type Member = {
@@ -15,6 +15,12 @@ type Member = {
     grade: any;
     parts: string | string[];
     content?: string;
+
+    // 追加フィールド
+    FullName?: string;
+    nickname?: string;
+    private_content?: string; // ★限定ページだけの特別フィールド！
+    SNS?: string;
 };
 
 // ▼ 部員データを全件取得
@@ -23,12 +29,25 @@ const response = await client.get<MicroCMSListResponse<Member>>({
     queries: {
         limit: 100,
         orders: "grade",
-        fields: ["id", "name", "image", "grade", "parts", "content"],
+        fields: [
+            "id",
+            "name",
+            "image",
+            "grade",
+            "parts",
+            "content",
+            "FullName",
+            "nickname",
+            "private_content", // ★ここも忘れずに取得
+            "SNS",
+        ],
     },
 });
+
+// ※ getSchoolYear, normalizePart 関数は import したので削除！
 ---
 
-<Layout title="MEMBER">
+<Layout title="LIMITED_MEMBER" isLimited={true}>
     <div id="header-placeholder"></div>
 
     <section id="vidual-area">
@@ -38,8 +57,8 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             </div>
         </div>
         <h2>
-            <span class="js_typing">Modern Folk Song Club</span><br /><span
-                class="js_typing">Members</span
+            <span class="js_typing">Members Only</span><br /><span
+                class="js_typing">Secret Profiles</span
             >
         </h2>
         <div class="scrolldown1"><span>Scroll</span></div>
@@ -47,31 +66,33 @@ const response = await client.get<MicroCMSListResponse<Member>>({
 
     <main id="main-area">
         <section id="service1">
-            <h2>Member</h2>
+            <h2 class="js_typing">Limited Member List</h2>
+            <p style="text-align:center; margin-bottom:30px; font-size:0.9rem;">
+                ここは部員限定ページです。<br
+                />部員にしか見せない「裏の顔」が見れるかも…？
+            </p>
 
             <div class="sort-container">
                 <ul class="sort-row">
                     <li class="filter-btn active" data-filter="all">全て</li>
+                    <li class="filter-btn" data-filter="grade-5">5年会</li>
                     <li class="filter-btn" data-filter="grade-4">4年会</li>
                     <li class="filter-btn" data-filter="grade-3">3年会</li>
                     <li class="filter-btn" data-filter="grade-2">2年会</li>
                     <li class="filter-btn" data-filter="grade-1">1年会</li>
                 </ul>
                 <ul class="sort-row">
-                    <li class="filter-btn" data-filter="part-Vo">ボーカル</li>
-                    <li class="filter-btn" data-filter="part-Gt">ギター</li>
-                    <li class="filter-btn" data-filter="part-Ba">ベース</li>
-                    <li class="filter-btn" data-filter="part-Dr">ドラム</li>
-                    <li class="filter-btn" data-filter="part-Key">
-                        キーボード
-                    </li>
+                    <li class="filter-btn" data-filter="part-Vo">Vo</li>
+                    <li class="filter-btn" data-filter="part-Gt">Gt</li>
+                    <li class="filter-btn" data-filter="part-Ba">Ba</li>
+                    <li class="filter-btn" data-filter="part-Dr">Dr</li>
+                    <li class="filter-btn" data-filter="part-Key">Key</li>
                 </ul>
             </div>
 
             <ul id="gallery" class="grid delayScroll">
                 {
                     response.contents.map((member) => {
-                        // 学年処理
                         let rawGrade = Array.isArray(member.grade)
                             ? member.grade[0]
                             : member.grade;
@@ -79,25 +100,33 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                             String(rawGrade).replace(/[^0-9]/g, ""),
                             10,
                         );
+                        // utilsから使用
                         const schoolYear = getSchoolYear(gradeNum);
 
-                        // パート処理
                         let rawPartsArray: string[] = [];
                         if (Array.isArray(member.parts)) {
                             rawPartsArray = member.parts;
                         } else if (member.parts) {
                             rawPartsArray = [member.parts as string];
                         }
-
-                        // 表示用
                         const partsDisplay = rawPartsArray.join(" / ");
-                        // 絞り込み用（正規化）
+
+                        // utilsから使用
                         const normalizedParts = rawPartsArray.map((p) =>
                             normalizePart(p),
                         );
+
                         const filterClasses =
                             `grade-${schoolYear} ` +
                             normalizedParts.map((p) => `part-${p}`).join(" ");
+
+                        const displayName = member.FullName
+                            ? member.FullName
+                            : member.name;
+                        const subName =
+                            member.FullName && member.name !== member.FullName
+                                ? member.name
+                                : "";
 
                         return (
                             <li class={`item ${filterClasses}`}>
@@ -108,15 +137,25 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                                         href="javascript:;"
                                         class="member-link"
                                     >
-                                        <div class="img-box">
+                                        <div class="img-box limited-border">
                                             <img
                                                 src={member.image.url}
-                                                alt={member.name}
+                                                alt={displayName}
                                             />
                                         </div>
-                                        <span>{member.name}</span>
+
+                                        <span class="main-name">
+                                            {displayName}
+                                        </span>
+
+                                        {member.nickname && (
+                                            <span class="nickname">
+                                                @{member.nickname}
+                                            </span>
+                                        )}
                                     </a>
 
+                                    {/* モーダル */}
                                     <div
                                         style="display: none;"
                                         id={`modal-${member.id}`}
@@ -126,13 +165,25 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                                             <div class="popup-img-area">
                                                 <img
                                                     src={member.image.url}
-                                                    alt={member.name}
+                                                    alt={displayName}
                                                 />
                                             </div>
                                             <div class="popup-text-area">
                                                 <h3 class="popup-name">
-                                                    {member.name}
+                                                    {displayName}
+                                                    {subName && (
+                                                        <span class="popup-fullname">
+                                                            （{subName}）
+                                                        </span>
+                                                    )}
                                                 </h3>
+
+                                                {member.nickname && (
+                                                    <p class="popup-nickname-large">
+                                                        @{member.nickname}
+                                                    </p>
+                                                )}
+
                                                 <div class="popup-info">
                                                     <span class="badge grade">
                                                         {schoolYear}年会
@@ -142,18 +193,44 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                                                     </span>
                                                 </div>
 
-                                                {member.content ? (
-                                                    <div class="popup-comment">
-                                                        {member.content}
-                                                    </div>
-                                                ) : (
-                                                    <div
-                                                        class="popup-comment"
-                                                        style="color:#ccc;"
-                                                    >
-                                                        <p>紹介文なし</p>
+                                                {member.SNS && (
+                                                    <div class="sns-links">
+                                                        <a
+                                                            href={member.SNS}
+                                                            target="_blank"
+                                                            class="sns-btn"
+                                                        >
+                                                            🔗 SNS Check!
+                                                        </a>
                                                     </div>
                                                 )}
+
+                                                <div class="popup-scroll-area">
+                                                    <div class="popup-comment">
+                                                        <p class="section-label">
+                                                            Profile
+                                                        </p>
+                                                        {member.content
+                                                            ? member.content
+                                                            : "紹介文なし"}
+                                                    </div>
+
+                                                    {/* ▼▼▼ ここが限定ページの見せ場！ ▼▼▼ */}
+                                                    {member.private_content && (
+                                                        <div class="private-comment">
+                                                            <p class="section-label secret">
+                                                                🔒 SECRET
+                                                                (Members Only)
+                                                            </p>
+                                                            <div class="secret-text">
+                                                                {
+                                                                    member.private_content
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {/* ▲▲▲ 見せ場ここまで ▲▲▲ */}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -202,6 +279,7 @@ const response = await client.get<MicroCMSListResponse<Member>>({
     </script>
 
     <style>
+        /* 一般ページとほぼ同じですが、ライトモード対応を含めています */
         .sort-container {
             margin-bottom: 40px;
             text-align: center;
@@ -224,14 +302,14 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             border-radius: 30px;
             padding: 8px 20px;
             cursor: pointer;
-            color: #fff; /* ダークモード時の文字色（白） */
+            color: #fff; /* デフォルト白（ダークモード） */
             transition: all 0.3s;
         }
 
-        /* ▼▼▼ ライトモード：フィルタボタン ▼▼▼ */
+        /* ライトモード対応 */
         :global(body.light-mode) .filter-btn,
         :global(body.light) .filter-btn {
-            color: #333; /* 文字を黒に！ */
+            color: #333;
             border-color: #999;
         }
 
@@ -242,7 +320,6 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             color: #fff !important;
         }
 
-        /* ▼▼▼ ライトモード：アクティブボタン（青） ▼▼▼ */
         :global(body.light-mode) .filter-btn:hover,
         :global(body.light-mode) .filter-btn.active,
         :global(body.light) .filter-btn:hover,
@@ -260,9 +337,7 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             margin: 0 auto;
             list-style: none;
             max-width: 1200px;
-            position: relative;
         }
-
         .item {
             position: relative;
             display: block;
@@ -270,13 +345,12 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             margin-bottom: 20px;
             transition: opacity 0.3s ease;
         }
-
         .item-content {
-            position: relative;
             width: 100%;
             height: 100%;
             text-align: center;
         }
+
         .img-box {
             width: 100%;
             aspect-ratio: 1 / 1;
@@ -290,30 +364,32 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             width: 100%;
             height: 100%;
             object-fit: cover;
-            vertical-align: bottom;
         }
         .item:hover .img-box {
-            border-color: #b22222;
-        }
-        /* ▼▼▼ ライトモード：画像のボーダー（青） ▼▼▼ */
-        :global(body.light-mode) .item:hover .img-box,
-        :global(body.light) .item:hover .img-box {
-            border-color: #0066cc;
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
         }
 
-        .item span {
+        .main-name {
             display: block;
             margin-top: 10px;
             font-weight: bold;
-            color: #fff; /* ダークモード時の文字色（白） */
-            font-size: 0.95rem;
+            color: #fff; /* デフォルト白 */
+            font-size: 1rem;
             transition: color 0.3s;
         }
 
-        /* ▼▼▼ ライトモード：名前の文字色（黒） ▼▼▼ */
-        :global(body.light-mode) .item span,
-        :global(body.light) .item span {
+        /* ライトモード対応 */
+        :global(body.light-mode) .main-name,
+        :global(body.light) .main-name {
             color: #333;
+        }
+
+        .nickname {
+            display: block;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 2px;
         }
 
         .member-popup {
@@ -332,7 +408,7 @@ const response = await client.get<MicroCMSListResponse<Member>>({
         }
         .popup-img-area {
             width: 40%;
-            background: #f0f0f0;
+            background: #222;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -344,31 +420,47 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             border-radius: 50%;
             aspect-ratio: 1 / 1;
             object-fit: cover;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
         }
+
         .popup-text-area {
             width: 60%;
             padding: 30px;
             text-align: left;
+            display: flex;
+            flex-direction: column;
         }
+
         .popup-name {
             font-size: 1.8rem;
             font-weight: bold;
-            margin-bottom: 15px;
             border-bottom: 2px solid #b22222;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
             display: inline-block;
             font-family: "Oswald", sans-serif;
             color: #333;
         }
-        /* ▼▼▼ ライトモード：ポップアップ名の線（青） ▼▼▼ */
+
         :global(body.light-mode) .popup-name,
         :global(body.light) .popup-name {
             border-bottom-color: #0066cc;
         }
 
+        .popup-fullname {
+            font-size: 1rem;
+            color: #555;
+            font-weight: normal;
+            margin-left: 10px;
+        }
+        .popup-nickname-large {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
         .popup-info {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .badge {
             display: inline-block;
@@ -385,18 +477,83 @@ const response = await client.get<MicroCMSListResponse<Member>>({
         .badge.part {
             background-color: #b22222;
         }
-        /* ▼▼▼ ライトモード：バッジの色（青） ▼▼▼ */
+
         :global(body.light-mode) .badge.part,
         :global(body.light) .badge.part {
             background-color: #0066cc;
+        }
+
+        .sns-links {
+            margin-bottom: 20px;
+        }
+        .sns-btn {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(45deg, #1da1f2, #833ab4);
+            transition: opacity 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .sns-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .popup-scroll-area {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .section-label {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            display: inline-block;
+        }
+
+        .section-label.secret {
+            color: #d9534f;
+            font-weight: bold;
+            border-color: #d9534f;
+            margin-top: 25px;
+        }
+        .private-comment {
+            background: #fff5f5;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed #d9534f;
+            position: relative;
+        }
+        .private-comment::before {
+            content: "TOP SECRET";
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: #d9534f;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .secret-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
         }
 
         .popup-comment {
             font-size: 1rem;
             line-height: 1.8;
             white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #333; /* 明示的に黒 */
+            margin-bottom: 10px;
+            color: #333;
         }
 
         @media only screen and (max-width: 768px) {
@@ -407,25 +564,15 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                 width: 45%;
                 max-width: 160px;
             }
-            .item span {
-                font-size: 0.8rem;
+            .popup-inner {
+                flex-direction: column;
             }
-            .member-popup {
-                max-width: 95%;
-            }
-            .popup-img-area {
+            .popup-img-area,
+            .popup-text-area {
                 width: 100%;
-                padding: 30px;
             }
             .popup-img-area img {
                 width: 150px;
-            }
-            .popup-text-area {
-                width: 100%;
-                padding: 20px;
-            }
-            .popup-name {
-                font-size: 1.5rem;
             }
         }
     </style>

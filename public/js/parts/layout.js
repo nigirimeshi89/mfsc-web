@@ -1,4 +1,12 @@
+// public/js/parts/layout.js
+
+/* * Astroへの完全移行に伴い、JSによるヘッダー/フッターの動的生成は廃止しました。
+ * 現在は src/layouts/Layout.astro 内で直接記述されています。
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
+    /* // --- 以下の処理はAstro側で行うため停止 ---
+
     // ★1. 今いるページが「limited」かチェック
     const isLimited = document.body.classList.contains('limited');
 
@@ -6,21 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let navHTML = '';
 
     if (isLimited) {
-        // 【限定版】のメニュー
-        // ※まだ限定ページを作っていない場合は、一旦このままでOKです。
-        // ※将来的に限定ページもAstro化したら、ここも /limited/member などに変えます。
         navHTML = `
             <ul id="g-navi" class="nav01c">
                 <li><a href="/limited">Top</a></li>
                 <li><a href="/limited/gallery">Gallery</a></li>
-                <li><a href="/live">Live</a></li>
+                <li><a href="/limited/live">Live</a></li>
                 <li><a href="/limited/schedule">Schedule</a></li>
                 <li><a href="/limited/member">Member</a></li>
             </ul>
         `;
     } else {
-        // 【通常版】のメニュー (Astro用に修正済み！)
-        // /Public/MEMBER.html → /member になっています
         navHTML = `
             <ul id="g-navi" class="nav01c">
                 <li><a href="/">Top</a></li>
@@ -32,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ヘッダー全体のHTML
-    // ※タイトルのリンクも /index.html から / に直しました
     const headerHTML = `
     <header id="header">
         <h1><a href="/">Trajectory of Modern</a></h1>
@@ -45,16 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </nav>
         <div class="search-open-btn"></div>
     </header>
-
-    <div id="search-wrap">
-        <div class="close-btn"><span></span><span></span></div>
-        <div class="search-area">
-            <form id="login_form">
-                <input type="password" id="pass" placeholder="Password" autocomplete="off">
-            </form>
-            <script src="/js/passwordAuth.js"></script>
-        </div>
-    </div>
+    
+    // (中略) ...検索窓などのHTML...
     `;
 
     // フッターは共通
@@ -71,10 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
     </footer>
     `;
 
-    // HTMLへの書き出し処理
+    // HTMLへの書き出し処理（★ここを止めるのが一番大事！）
     const headerPlace = document.getElementById('header-placeholder');
     const footerPlace = document.getElementById('footer-placeholder');
 
     if (headerPlace) headerPlace.outerHTML = headerHTML;
     if (footerPlace) footerPlace.outerHTML = footerHTML;
+    */
 });

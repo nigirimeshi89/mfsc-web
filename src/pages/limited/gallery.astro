@@ -1,9 +1,9 @@
 ---
-// src/pages/gallery.astro
-import Layout from "../layouts/Layout.astro";
+// src/pages/limited/gallery.astro
+import Layout from "../../layouts/Layout.astro";
 // 作った共通ファイルを読み込むだけ！
-import { client } from "../lib/microcms"; // ※階層に合わせて ../ の数を調整
-import type { MicroCMSListResponse } from "../lib/microcms";
+import { client } from "../../lib/microcms"; // ※階層に合わせて ../ の数を調整
+import type { MicroCMSListResponse } from "../../lib/microcms";
 
 // const client = ... の行は削除！
 
@@ -16,13 +16,12 @@ type Gallery = {
     images: any[];
 };
 
-// 一般用：「限定記事以外」を取得
+// 限定用：「全件」取得
 const response = await client.get<MicroCMSListResponse<Gallery>>({
     endpoint: "galleries",
     queries: {
         limit: 100,
         orders: "-date",
-        filters: "isLimited[not_equals]true",
     },
 });
 
@@ -47,7 +46,7 @@ const formatDate = (dateString: string) => {
 };
 ---
 
-<Layout title="GALLERY">
+<Layout title="GALLERY (Limited) | MFSC" isLimited={true}>
     <div id="header-placeholder"></div>
 
     <section id="vidual-area">
@@ -57,8 +56,8 @@ const formatDate = (dateString: string) => {
             </div>
         </div>
         <h2>
-            <span class="js_typing">Modern Folk Song Club</span><br /><span
-                class="js_typing">Gallery</span
+            <span class="js_typing">Limited</span><br /><span class="js_typing"
+                >Gallery</span
             >
         </h2>
         <div class="scrolldown1"><span>Scroll</span></div>
@@ -66,7 +65,13 @@ const formatDate = (dateString: string) => {
 
     <main id="main-area">
         <section id="service1">
-            <h2 class="js_typing">GALLERY</h2>
+            <h2 class="js_typing">Limited Gallery</h2>
+            <p style="text-align:center; margin-bottom:40px;">
+                <span style="color:#b22222; font-weight:bold;">🔒 SECRET</span> マークがついているものは<br
+                />
+                一般公開されていない限定写真です。
+            </p>
+
             <section class="details-wrapper">
                 <div class="corner-title">
                     {
@@ -75,15 +80,24 @@ const formatDate = (dateString: string) => {
                                 <h3 class="js_typing year-title">{year}年度</h3>
                                 <ul class="gallery-grid">
                                     {groupedGalleries[year].map((gallery) => (
-                                        <li class="gallery-item">
-                                            {gallery.isNew && (
-                                                <div class="new">
-                                                    <p>New!</p>
+                                        <li
+                                            class={`gallery-item ${gallery.isLimited ? "item-limited" : ""}`}
+                                        >
+                                            {gallery.isNew &&
+                                                !gallery.isLimited && (
+                                                    <div class="new">
+                                                        <p>New!</p>
+                                                    </div>
+                                                )}
+
+                                            {gallery.isLimited && (
+                                                <div class="secret-badge">
+                                                    <p>🔒 SECRET</p>
                                                 </div>
                                             )}
 
                                             <a
-                                                href={`/gallery/${gallery.id}`}
+                                                href={`/limited/gallery/${gallery.id}`}
                                                 class="gallery-link"
                                             >
                                                 <div class="img-box">
@@ -137,7 +151,6 @@ const formatDate = (dateString: string) => {
             padding-bottom: 5px;
             width: 100%;
         }
-
         .gallery-grid {
             display: flex;
             flex-wrap: wrap;
@@ -151,10 +164,9 @@ const formatDate = (dateString: string) => {
             width: calc(50% - 10px);
             aspect-ratio: 16 / 9;
             overflow: hidden;
-            border-radius: 8px; /* 外枠は少し丸くてもOK */
+            border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-
         .gallery-link {
             display: block;
             width: 100%;
@@ -163,19 +175,19 @@ const formatDate = (dateString: string) => {
             color: #fff;
         }
 
-        /* ▼▼▼ 修正ポイント：border-radius: 0 で強制的に四角くする！ ▼▼▼ */
+        /* ▼▼▼ 修正ポイント：ここも強制的に四角く！ ▼▼▼ */
         .img-box {
             width: 100%;
             height: 100%;
             background: #333;
-            border-radius: 0 !important; /* ★ここが重要！丸くしない！ */
+            border-radius: 0 !important;
         }
         .img-box img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transition: transform 0.5s ease;
-            border-radius: 0 !important; /* ★念のため画像自体も */
+            border-radius: 0 !important;
         }
         /* ▲▲▲ 修正ポイントここまで ▲▲▲ */
 
@@ -229,12 +241,40 @@ const formatDate = (dateString: string) => {
             color: #aaa;
             font-size: 0.8rem;
         }
-
         .new {
             position: absolute;
             top: 10px;
             left: 10px;
             z-index: 5;
+        }
+
+        .item-limited {
+            border: 2px solid #b22222;
+        }
+        .secret-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #b22222;
+            color: #fff;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
         @media (max-width: 768px) {

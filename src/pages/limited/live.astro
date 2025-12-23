@@ -1,0 +1,233 @@
+---
+// src/pages/limited/live.astro
+import Layout from "../../layouts/Layout.astro";
+// 作った共通ファイルを読み込むだけ！
+import { client } from "../../lib/microcms"; // ※階層に合わせて ../ の数を調整
+import type { MicroCMSListResponse } from "../../lib/microcms";
+
+// const client = ... の行は削除！
+
+type Live = {
+    id: string;
+    title: string;
+    date: string;
+    flyer?: { url: string };
+    content: string;
+};
+
+const response = await client.get<MicroCMSListResponse<Live>>({
+    endpoint: "live_info", // ★ご自身のエンドポイント名に合わせてください
+    queries: {
+        limit: 100,
+        orders: "-date",
+    },
+});
+
+// 年度ごとのグループ分け処理
+const groupedLives: Record<number, Live[]> = {};
+
+response.contents.forEach((live) => {
+    const d = new Date(live.date);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const fiscalYear = month < 4 ? year - 1 : year;
+
+    if (!groupedLives[fiscalYear]) {
+        groupedLives[fiscalYear] = [];
+    }
+    groupedLives[fiscalYear].push(live);
+});
+
+const sortedYears = Object.keys(groupedLives)
+    .map(Number)
+    .sort((a, b) => b - a);
+
+const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+};
+---
+
+<Layout title="LIVE ARCHIVE | MFSC Limited" isLimited={true}>
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <h2>
+            <span class="js_typing">Limited</span><br /><span class="js_typing"
+                >Live Archive</span
+            >
+        </h2>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service1">
+            <h2 class="js_typing">Live Archive</h2>
+            <p style="text-align:center; margin-bottom:40px;">
+                過去のライブ映像やセットリストを公開中！<br />
+                タイトルをクリックして詳細をチェックしてね👇
+            </p>
+
+            <section class="details-wrapper">
+                <div class="corner-title">
+                    {
+                        sortedYears.map((year) => (
+                            <div class="year-section">
+                                {/* 年度の見出し */}
+                                <h3 class="js_typing year-title">{year}年度</h3>
+
+                                {/* リスト */}
+                                <ul class="live-list">
+                                    {groupedLives[year].map((live) => (
+                                        <li class="live-item">
+                                            <a
+                                                href={`/limited/live/${live.id}`}
+                                                class="live-link"
+                                            >
+                                                <div class="live-info">
+                                                    <span class="live-date">
+                                                        {formatDate(live.date)}
+                                                    </span>
+                                                    <h3 class="live-title">
+                                                        {live.title}
+                                                    </h3>
+                                                </div>
+                                                <div class="arrow">→</div>
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))
+                    }
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <style>
+        /* 年度見出し（デフォルト：ダークモード用・赤） */
+        .year-title {
+            font-size: 1.5rem;
+            margin: 50px 0 20px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            color: #b22222; /* ★赤系 */
+            font-family: "Oswald", sans-serif;
+            transition:
+                color 0.3s,
+                border-color 0.3s;
+        }
+
+        /* ▼▼▼ ライトモード時の上書き設定（青系にする） ▼▼▼ */
+        /* bodyタグに light-mode, light, is-light などのクラスがついた時に発動 */
+        :global(body.light-mode) .year-title,
+        :global(body.light) .year-title,
+        :global(body.is-light) .year-title {
+            color: #0066cc; /* ★青系 */
+            border-color: #0066cc; /* 線も青くする */
+        }
+        /* ▲▲▲ 設定ここまで ▲▲▲ */
+
+        .live-list {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0;
+            list-style: none;
+        }
+
+        .live-item {
+            border-bottom: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+
+        .live-item:first-child {
+            border-top: 1px solid #333;
+        }
+
+        .live-item:hover {
+            background-color: rgba(178, 34, 34, 0.05);
+            border-color: #b22222;
+        }
+        /* ライトモード時のホバー色も青っぽく変えたい場合はここも調整 */
+        :global(body.light-mode) .live-item:hover,
+        :global(body.light) .live-item:hover {
+            background-color: rgba(0, 102, 204, 0.05);
+            border-color: #0066cc;
+        }
+
+        .live-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+            text-decoration: none;
+            width: 100%;
+        }
+        /* テキスト色は基本黒(#333)ですが、ダークモードで白文字に反転させる処理は
+           Layout.astroやglobal.cssで管理されている想定です */
+
+        .live-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .live-date {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+            font-family: "Oswald", sans-serif;
+        }
+
+        .live-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0;
+            transition: color 0.3s;
+        }
+
+        .live-item:hover .live-title {
+            color: #b22222;
+        }
+        :global(body.light-mode) .live-item:hover .live-title,
+        :global(body.light) .live-item:hover .live-title {
+            color: #0066cc; /* ライトモードなら青く光る */
+        }
+
+        .arrow {
+            font-size: 1.2rem;
+            color: #ccc;
+            transition:
+                transform 0.3s,
+                color 0.3s;
+        }
+
+        .live-item:hover .arrow {
+            color: #b22222;
+            transform: translateX(5px);
+        }
+        :global(body.light-mode) .live-item:hover .arrow,
+        :global(body.light) .live-item:hover .arrow {
+            color: #0066cc;
+        }
+
+        @media (max-width: 768px) {
+            .live-link {
+                padding: 15px;
+            }
+            .live-title {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</Layout>

@@ -1,0 +1,186 @@
+---
+// src/pages/limited/gallery/[galleryId].astro
+import Layout from "../../../layouts/Layout.astro";
+import { createClient } from "microcms-js-sdk";
+
+// ▼ API設定
+const client = createClient({
+    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+    apiKey: import.meta.env.MICROCMS_API_KEY,
+});
+
+// ▼ getStaticPaths
+export async function getStaticPaths() {
+    const client = createClient({
+        serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+        apiKey: import.meta.env.MICROCMS_API_KEY,
+    });
+
+    // limit は 100 まで
+    const response = await client.get({
+        endpoint: "galleries",
+        queries: { limit: 100 },
+    });
+
+    return response.contents.map((content: any) => ({
+        params: { galleryId: content.id },
+        props: { gallery: content },
+    }));
+}
+
+// 型定義
+interface Props {
+    gallery: {
+        id: string;
+        title: string;
+        date: string;
+        isLimited?: boolean;
+        images?: { url: string }[];
+        content?: string;
+    };
+}
+
+const { gallery } = Astro.props;
+
+// 日付フォーマット
+const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+};
+---
+
+<Layout title={`${gallery.title} | MFSC Limited`} isLimited={true}>
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <h2>
+            <span class="js_typing">Limited</span><br /><span class="js_typing"
+                >Gallery Detail</span
+            >
+        </h2>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service1">
+            <div class="detail-header">
+                <h2 class="js_typing">{gallery.title}</h2>
+                <p class="date">{formatDate(gallery.date)}</p>
+                {gallery.isLimited && <span class="secret-tag">🔒 SECRET</span>}
+            </div>
+
+            <div class="gallery-images">
+                {
+                    gallery.images &&
+                        gallery.images.map((img: any) => (
+                            <div class="img-box">
+                                <a
+                                    href={img.url}
+                                    data-lightbox="gallery-detail"
+                                    data-title={gallery.title}
+                                >
+                                    <img src={img.url} alt={gallery.title} />
+                                </a>
+                            </div>
+                        ))
+                }
+            </div>
+
+            {
+                gallery.content && (
+                    <div class="gallery-content">
+                        <p>{gallery.content}</p>
+                    </div>
+                )
+            }
+
+            <div class="back-btn-area">
+                <a href="/limited/gallery" class="btn04 bordercircle">
+                    <span>Back to List</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <style>
+        .detail-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .date {
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .secret-tag {
+            background: #b22222;
+            color: #fff;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        .gallery-images {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        /* ▼▼▼ ここが修正ポイント！ ▼▼▼ */
+        .img-box {
+            width: 30%;
+            aspect-ratio: 1/1; /* 正方形を維持 */
+            overflow: hidden;
+            border-radius: 0; /* ★ここを0にして真四角にする */
+            /* もし少しだけ角を丸くしたい場合は border-radius: 8px; などに変更してください */
+        }
+        .img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+            border-radius: 0; /* ★念のためここにも指定 */
+        }
+        /* ▲▲▲ 修正ポイントここまで ▲▲▲ */
+
+        .img-box:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-content {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+        }
+
+        .back-btn-area {
+            text-align: center;
+            margin: 60px 0;
+        }
+        .btn04 {
+            display: inline-block;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 10px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn04:hover {
+            background: #fff;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .img-box {
+                width: 45%;
+            }
+        }
+    </style>
+</Layout>

@@ -41,7 +41,7 @@ export async function getStaticPaths() {
     });
 
     return response.contents.map((content: any) => ({
-        params: { id: content.id },
+        params: { galleryId: content.id },
         props: { gallery: content },
     }));
 }
@@ -64,7 +64,8 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
         </div>
         <h2>
             <span class="js_typing">{formattedDate}</span><br /><span
-                class="js_typing">GALLERY</span>
+                class="js_typing">GALLERY</span
+            >
         </h2>
         <div class="scrolldown1"><span>Scroll</span></div>
     </section>

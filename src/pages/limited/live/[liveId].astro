@@ -1,0 +1,230 @@
+---
+// src/pages/limited/live/[liveId].astro
+import Layout from "../../../layouts/Layout.astro";
+import { createClient } from "microcms-js-sdk";
+
+const client = createClient({
+    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+    apiKey: import.meta.env.MICROCMS_API_KEY,
+});
+
+export async function getStaticPaths() {
+    const client = createClient({
+        serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
+        apiKey: import.meta.env.MICROCMS_API_KEY,
+    });
+
+    const response = await client.get({
+        endpoint: "live_info", // ★エンドポイント名
+        queries: { limit: 100 },
+    });
+
+    return response.contents.map((content: any) => ({
+        params: { liveId: content.id },
+        props: { live: content },
+    }));
+}
+
+interface Props {
+    live: {
+        id: string;
+        title: string;
+        date: string;
+        flyer?: { url: string };
+        content: string;
+    };
+}
+
+const { live } = Astro.props;
+
+const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+};
+---
+
+<Layout title={`${live.title} | Live Archive`} isLimited={true}>
+    <div id="header-placeholder"></div>
+
+    <section id="vidual-area">
+        <div id="slider-area" class="bgextend bgRLextendTrigger">
+            <div class="bgappearTrigger">
+                <div id="slider"></div>
+            </div>
+        </div>
+        <h2>
+            <span class="js_typing">Limited</span><br /><span class="js_typing"
+                >Live Report</span
+            >
+        </h2>
+        <div class="scrolldown1"><span>Scroll</span></div>
+    </section>
+
+    <main id="main-area">
+        <section id="service1">
+            <div class="live-header">
+                <p class="live-date">{formatDate(live.date)}</p>
+                <h2 class="live-title">{live.title}</h2>
+            </div>
+
+            <div class="live-content-wrapper">
+                {/* フライヤー画像（クリックで拡大） */}
+                {
+                    live.flyer && (
+                        <div class="main-flyer">
+                            <a
+                                href={live.flyer.url}
+                                data-fancybox
+                                data-caption={`${live.title} Flyer`}
+                            >
+                                <img src={live.flyer.url} alt={live.title} />
+                            </a>
+                            <p class="flyer-caption">
+                                ※画像をタップすると拡大表示されます
+                            </p>
+                        </div>
+                    )
+                }
+
+                {/* 本文 */}
+                <div class="post-content" set:html={live.content} />
+            </div>
+
+            <div class="back-btn-area">
+                <a href="/limited/live" class="btn04 bordercircle">
+                    <span>Back to Archive</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <style>
+        .live-header {
+            text-align: center;
+            margin-bottom: 40px;
+            /* ▼▼▼ デフォルトは赤 ▼▼▼ */
+            border-bottom: 2px solid #b22222;
+            padding-bottom: 20px;
+            display: inline-block;
+            width: 100%;
+            transition: border-color 0.3s; /* 色の切り替えを滑らかに */
+        }
+
+        /* ▼▼▼ ライトモードなら青に上書き！ ▼▼▼ */
+        :global(body.light-mode) .live-header,
+        :global(body.light) .live-header,
+        :global(body.is-light) .live-header {
+            border-bottom-color: #0066cc;
+        }
+
+        .live-date {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+        .live-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: "Oswald", sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        .live-content-wrapper {
+            max-width: 800px;
+            margin: 0 auto 60px;
+            padding: 0 20px;
+        }
+
+        .main-flyer {
+            margin-bottom: 50px;
+            text-align: center;
+        }
+        .main-flyer a {
+            display: inline-block;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .main-flyer a:hover {
+            transform: scale(1.02);
+        }
+
+        .main-flyer img {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .flyer-caption {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        /* リッチエディタスタイル */
+        .post-content :global(iframe) {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            height: auto;
+            margin: 30px 0;
+        }
+
+        /* 見出し（h2）の左線も色を変える設定 */
+        .post-content :global(h2) {
+            font-size: 1.5rem;
+            border-left: 5px solid #b22222; /* デフォルト赤 */
+            padding-left: 15px;
+            margin: 40px 0 20px;
+            transition: border-color 0.3s;
+        }
+        /* ライトモードで青 */
+        :global(body.light-mode) .post-content :global(h2),
+        :global(body.light) .post-content :global(h2) {
+            border-left-color: #0066cc;
+        }
+
+        .post-content :global(h3) {
+            font-size: 1.3rem;
+            margin: 30px 0 15px;
+            font-weight: bold;
+            color: #555;
+        }
+        .post-content :global(p) {
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+        .post-content :global(img) {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-btn-area {
+            text-align: center;
+            margin: 60px 0;
+        }
+        .btn04 {
+            display: inline-block;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 10px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn04:hover {
+            background: #fff;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .live-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</Layout>
