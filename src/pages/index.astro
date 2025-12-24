@@ -208,4 +208,50 @@ const response = await client.get<MicroCMSListResponse<News>>({
 			}
 		});
 	</script>
+
+	<style>
+		/* ニュースリストのスタイル（左揃え・縦積み完全修正版） */
+		#news-list {
+			padding: 0;
+			list-style: none;
+			text-align: left !important; /* 強制的に左揃え */
+		}
+
+		#news-list li {
+			padding: 15px 0;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+			/* ▼ 縦並び＆左寄せの設定 ▼ */
+			display: flex;
+			flex-direction: column; /* 縦積みにする */
+			align-items: flex-start; /* 【重要】中身を左端に寄せる */
+			justify-content: flex-start;
+			gap: 5px; /* 日付とタイトルの隙間 */
+		}
+
+		#news-list time {
+			font-size: 0.85rem;
+			color: #aaa;
+			font-family: "Oswald", sans-serif;
+			letter-spacing: 0.05em;
+			margin: 0; /* 変な余白を消す */
+			line-height: 1;
+		}
+
+		#news-list a,
+		#news-list span {
+			font-size: 1rem;
+			line-height: 1.5;
+			display: block; /* ブロック要素にして横幅を確保 */
+			text-decoration: none;
+			text-align: left; /* 文字自体も左揃え */
+			margin: 0; /* 変な余白を消す */
+			padding: 0; /* 変な余白を消す */
+			width: 100%; /* 横幅いっぱいに広げる */
+		}
+
+		#news-list a:hover {
+			opacity: 0.7;
+		}
+	</style>
 </Layout>
