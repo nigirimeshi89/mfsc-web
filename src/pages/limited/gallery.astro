@@ -1,11 +1,8 @@
 ---
 // src/pages/limited/gallery.astro
 import Layout from "../../layouts/Layout.astro";
-// 作った共通ファイルを読み込むだけ！
-import { client } from "../../lib/microcms"; // ※階層に合わせて ../ の数を調整
+import { client } from "../../lib/microcms";
 import type { MicroCMSListResponse } from "../../lib/microcms";
-
-// const client = ... の行は削除！
 
 type Gallery = {
     id: string;
@@ -16,12 +13,13 @@ type Gallery = {
     images: any[];
 };
 
-// 限定用：「全件」取得
+// ▼▼▼ 限定記事のみを取得 ▼▼▼
 const response = await client.get<MicroCMSListResponse<Gallery>>({
     endpoint: "galleries",
     queries: {
         limit: 100,
         orders: "-date",
+        filters: "isLimited[equals]true",
     },
 });
 
@@ -36,6 +34,7 @@ response.contents.forEach((gallery) => {
     }
     groupedGalleries[fiscalYear].push(gallery);
 });
+
 const sortedYears = Object.keys(groupedGalleries)
     .map(Number)
     .sort((a, b) => b - a);
@@ -66,9 +65,9 @@ const formatDate = (dateString: string) => {
     <main id="main-area">
         <section id="service1">
             <h2 class="js_typing">Limited Gallery</h2>
+
+            {/* ▼▼▼ テキスト変更：シンプルに ▼▼▼ */}
             <p style="text-align:center; margin-bottom:40px;">
-                <span style="color:#b22222; font-weight:bold;">🔒 SECRET</span> マークがついているものは<br
-                />
                 一般公開されていない限定写真です。
             </p>
 
@@ -80,21 +79,14 @@ const formatDate = (dateString: string) => {
                                 <h3 class="js_typing year-title">{year}年度</h3>
                                 <ul class="gallery-grid">
                                     {groupedGalleries[year].map((gallery) => (
-                                        <li
-                                            class={`gallery-item ${gallery.isLimited ? "item-limited" : ""}`}
-                                        >
-                                            {gallery.isNew &&
-                                                !gallery.isLimited && (
-                                                    <div class="new">
-                                                        <p>New!</p>
-                                                    </div>
-                                                )}
-
-                                            {gallery.isLimited && (
-                                                <div class="secret-badge">
-                                                    <p>🔒 SECRET</p>
+                                        <li class="gallery-item">
+                                            {gallery.isNew && (
+                                                <div class="new">
+                                                    <p>New!</p>
                                                 </div>
                                             )}
+
+                                            {/* ▼▼▼ 修正：SECRETバッジを削除しました ▼▼▼ */}
 
                                             <a
                                                 href={`/limited/gallery/${gallery.id}`}
@@ -143,6 +135,22 @@ const formatDate = (dateString: string) => {
         </section>
     </main>
 
+    <script is:inline>
+        window.addEventListener("load", function () {
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined")
+                return;
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: [{ src: "/img/jpg/bg_main_01.jpg" }],
+            });
+        });
+    </script>
+
     <style>
         .year-title {
             font-size: 1.5rem;
@@ -175,7 +183,6 @@ const formatDate = (dateString: string) => {
             color: #fff;
         }
 
-        /* ▼▼▼ 修正ポイント：ここも強制的に四角く！ ▼▼▼ */
         .img-box {
             width: 100%;
             height: 100%;
@@ -189,7 +196,6 @@ const formatDate = (dateString: string) => {
             transition: transform 0.5s ease;
             border-radius: 0 !important;
         }
-        /* ▲▲▲ 修正ポイントここまで ▲▲▲ */
 
         .gallery-item:hover .img-box img {
             transform: scale(1.1);
@@ -248,34 +254,7 @@ const formatDate = (dateString: string) => {
             z-index: 5;
         }
 
-        .item-limited {
-            border: 2px solid #b22222;
-        }
-        .secret-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: #b22222;
-            color: #fff;
-            padding: 5px 10px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            z-index: 5;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
+        /* SECRETバッジ用のCSSは不要になったため削除しました */
 
         @media (max-width: 768px) {
             .gallery-item {

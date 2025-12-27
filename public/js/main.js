@@ -3,7 +3,6 @@
 /*===========================================================*/
 
 // オーディオスペクトラム関連のグローバル変数
-// これらは関数スコープではなく、ファイルスコープで定義し、必要に応じて関数内で参照します。
 let pageTransitionOverlay;
 let transitionSpectrumCanvas;
 let tCtx;
@@ -13,34 +12,27 @@ let transitionAnimationFrameId;
 const transitionNumBars = 64;
 let transitionBarHeights = new Array(transitionNumBars).fill(0);
 let transitionTargetHeights = new Array(transitionNumBars).fill(0);
-const transitionSmoothFactor = 0.2; // この値は関数内で上書きされますが、定義は残します
-const transitionDecayFactor = 0.97; // この値は関数内で上書きされますが、定義は残します
+const transitionSmoothFactor = 0.2;
+const transitionDecayFactor = 0.97;
 
 // メインスペクトラム関連のグローバル変数
 let audioSpectrumCanvas;
-let mainSpectrumCtx; // ctxという名前は衝突しやすいのでmainSpectrumCtxに変更
+let mainSpectrumCtx;
 let mainSpectrumAnimationFrameId;
 const mainSpectrumNumBars = 128;
 let mainSpectrumCurrentBarHeights = new Array(mainSpectrumNumBars).fill(0);
 let mainSpectrumTargetBarHeights = new Array(mainSpectrumNumBars).fill(0);
-const mainSpectrumSmoothFactor = 0.15; // この値は関数内で上書きされますが、定義は残します
-const mainSpectrumDecayFactor = 0.98; // この値は関数内で上書きされますが、定義は残します
+const mainSpectrumSmoothFactor = 0.15;
+const mainSpectrumDecayFactor = 0.98;
 
 // TypingInit用の配列 (js_typing)
 var shuffleTextInstances = [];
 
-// 画像のベースパスをJavaScriptファイルからの相対パスとして決定する
-// (HTMLからの深さを問わず、常にjs/main.jsからの相対パスでimg/main/にアクセス)
+// 画像のベースパス設定
 const getJsRelativeImagePath = () => {
-	// main.jsが存在するディレクトリ (例: your_project/js/) を基準にする
-	// window.location.origin は 'file://' や 'http://localhost' など
-	// window.location.pathname は '/Public/GALLERY/24_0526.html' のようなHTMLのパス
-	// 現在のスクリプトのURL (main.jsのURL) を取得
 	const scripts = document.getElementsByTagName('script');
 	let mainJsPath = '';
 	for (let i = 0; i < scripts.length; i++) {
-		// scripts[i].src が main.js を含むパスであるかをチェック
-		// たとえば '/js/main.js' や '../js/main.js' など
 		if (scripts[i].src.includes('/js/main.js')) {
 			mainJsPath = scripts[i].src;
 			break;
@@ -48,24 +40,15 @@ const getJsRelativeImagePath = () => {
 	}
 
 	if (!mainJsPath) {
-		console.error("main.js script path not found. Image paths might be incorrect.");
-		// fallback to a default if main.js path can't be determined (less reliable)
-		return 'img/main/'; // このフォールバックはルートHTMLからの場合
+		return 'img/main/';
 	}
 
-	// main.js のディレクトリパスを取得
-	// 例: 'http://localhost/your_project/js/main.js' -> 'http://localhost/your_project/js/'
-	// 例: 'file:///C:/Users/.../your_project/js/main.js' -> 'file:///C:/Users/.../your_project/js/'
 	const mainJsDirPath = mainJsPath.substring(0, mainJsPath.lastIndexOf('/') + 1);
-
-	// main.js のディレクトリから img/main/ への相対パス
-	// 通常 'your_project/js/' から 'your_project/img/main/' へは '../img/main/'
 	const relativePathFromJsToImg = '../img/main/';
 
 	return mainJsDirPath + relativePathFromJsToImg;
 };
 
-// この関数を呼び出して、動的な画像ベースパスを設定
 const IMAGE_BASE_PATH = getJsRelativeImagePath();
 
 
@@ -73,7 +56,7 @@ const IMAGE_BASE_PATH = getJsRelativeImagePath();
 /* スクロールアニメーション関数群 */
 /*===========================================================*/
 
-// ドロップダウンメニューの制御 (jQuery)
+// ドロップダウンメニューの制御
 function mediaQueriesWin() {
 	var width = $(window).width();
 	if (width <= 960) {
@@ -91,41 +74,37 @@ function mediaQueriesWin() {
 	}
 }
 
-// スクロール途中からヘッダーを出現させる (jQuery)
+// スクロール途中からヘッダーを出現させる
 function FixedAnime() {
 	var serviceElem = $('#service');
-	// #service が存在しないページ (例: GALLERY.html) の場合を考慮してオフセットを取得
 	var elemTop = (serviceElem.length > 0) ? serviceElem.offset().top : $(document).height();
-
 	var scroll = $(window).scrollTop();
 	var header = $('#header');
 
 	if (scroll <= 20) {
 		header.removeClass('UpMove').addClass('DownMove');
-	} else if (scroll >= elemTop) { // #service の位置まできたら
+	} else if (scroll >= elemTop) {
 		header.removeClass('UpMove').addClass('DownMove');
-	} else { // それ以外
+	} else {
 		if (header.hasClass('DownMove')) {
 			header.removeClass('DownMove').addClass('UpMove');
 		}
 	}
 }
 
-// クリックしたらナビが上から下に出現 (ハンバーガーメニュー) (jQuery)
-// イベントリスナーはDOM Ready (DOMContentLoaded) で設定するため、ここでは関数定義のみ。
+// ハンバーガーメニュー
 function setupHamburgerMenu() {
 	$(".g-nav-openbtn").click(function () {
 		$(this).toggleClass('active');
 		$("#g-nav").toggleClass('panelactive');
 	});
-	$("#g-nav a").click(function () { // ナビゲーションのリンクがクリックされたら閉じる
+	$("#g-nav a").click(function () {
 		$(".g-nav-openbtn").removeClass('active');
 		$("#g-nav").removeClass('panelactive');
 	});
 }
 
-
-// ページの指定範囲内で出現 (ページトップボタン) (jQuery)
+// ページトップボタンの出現制御
 function setFadeElement() {
 	var windowH = $(window).height();
 	var scroll = $(window).scrollTop();
@@ -134,31 +113,25 @@ function setFadeElement() {
 	var footerElem = $('#footer');
 	var pageTop = $("#page-top");
 
-	// #contact と #footer が存在しないページを考慮
 	var contactTop = contactElem.length ? Math.round(contactElem.offset().top) : $(document).height();
 	var contactH = contactElem.length ? contactElem.outerHeight(true) : 0;
 	var footerTop = footerElem.length ? Math.round(footerElem.offset().top) : $(document).height();
 	var footerH = footerElem.length ? footerElem.outerHeight(true) : 0;
 
-	// 出現範囲内に入ったかどうかをチェック
 	if (scroll + windowH >= contactTop && scroll + windowH <= contactTop + contactH) {
 		$("#page-top").addClass("LeftMove").removeClass("RightMove");
 	}
-	// 2つ目の出現範囲に入ったかどうかをチェック
 	else if (scroll + windowH >= footerTop && scroll + windowH <= footerTop + footerH) {
 		$("#page-top").addClass("LeftMove").removeClass("RightMove");
 	}
-	// それ以外は
 	else {
-		// サイト表示時にRightMoveクラスを一瞬付与させないためのクラス付けは、
-		// CSSで初期状態を非表示にしておき、JSで表示を制御する方が確実です。
-		if (!pageTop.hasClass("hide-btn")) { // hide-btnクラスがない場合のみ動作 (HTMLにhide-btnクラスが設定されている前提)
+		if (!pageTop.hasClass("hide-btn")) {
 			$("#page-top").addClass("RightMove").removeClass("LeftMove");
 		}
 	}
 }
 
-// #page-topをクリックした際の設定 (jQuery)
+// ページトップボタンクリック設定
 function setupPageTopButton() {
 	$('#page-top').click(function () {
 		$('body,html').animate({
@@ -168,10 +141,10 @@ function setupPageTopButton() {
 	});
 }
 
-//タブメニュー (jQuery)
+// タブメニュー
 function GethashID(hashIDName) {
 	var tabLi = $('.tab li');
-	if (tabLi.length && hashIDName) { // タブが存在し、ハッシュIDが渡された場合のみ
+	if (tabLi.length && hashIDName) {
 		tabLi.find('a').each(function () {
 			var idName = $(this).attr('href');
 			if (idName == hashIDName) {
@@ -185,53 +158,8 @@ function GethashID(hashIDName) {
 	}
 }
 
-// Vegas.js の画像パスを動的に決定し、Vegasスライダーを初期化 (jQuery)
-function initVegasSlider() {
-	var sliderElem = $('#slider');
-	if (sliderElem.length) { // #slider要素が存在する場合のみ実行
-		sliderElem.vegas({
-			overlay: false,
-			transition: 'fade2',
-			transitionDuration: 1500,
-			delay: 4000,
-			animationDuration: 1500,
-			animation: 'random',
-			slides: getResponsiveImages(), // ここで動的な画像配列を取得
-			timer: false,
-		});
-	}
-}
-
-// Vegas.js 用の responsiveImage 配列をデバイス幅に応じて返す
-function getResponsiveImages() {
-	const windowwidth = window.innerWidth || document.documentElement.clientWidth || 0;
-	let responsiveImage;
-
-	if (windowwidth > 768) { // PC用の画像
-		responsiveImage = [
-			{ src: IMAGE_BASE_PATH + 'p_top(1).jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(2).jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(3).jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(4).jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(5).jpg' }
-		];
-	} else { // タブレットサイズ（768px）以下用の画像
-		responsiveImage = [
-			{ src: IMAGE_BASE_PATH + 'p_top(1)_m.jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(2)_m.jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(3)_m.jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(4)_m.jpg' },
-			{ src: IMAGE_BASE_PATH + 'p_top(5)_m.jpg' }
-		];
-	}
-	return responsiveImage;
-}
-
-
-// スクロール連動アニメーション (jQuery)
+// スクロール連動アニメーション
 function fadeAnime() {
-	// .eachループ内で要素のオフセットを繰り返し取得していますが、多数の要素がある場合はパフォーマンスに影響する可能性も。
-	// bgappearTrigger (背景色が伸びて出現中の要素が出現)
 	$('.bgappearTrigger').each(function () {
 		var elemPos = $(this).offset().top - 50;
 		var scroll = $(window).scrollTop();
@@ -242,7 +170,6 @@ function fadeAnime() {
 			$(this).removeClass('bgappear');
 		}
 	});
-	// bgLRextendTrigger (背景色が伸びて出現（左から）)
 	$('.bgLRextendTrigger').each(function () {
 		var elemPos = $(this).offset().top - 50;
 		var scroll = $(window).scrollTop();
@@ -253,7 +180,6 @@ function fadeAnime() {
 			$(this).removeClass('bgLRextend');
 		}
 	});
-	// bgRLextendTrigger (背景色が伸びて出現（右から）)
 	$('.bgRLextendTrigger').each(function () {
 		var elemPos = $(this).offset().top - 50;
 		var scroll = $(window).scrollTop();
@@ -264,9 +190,8 @@ function fadeAnime() {
 			$(this).removeClass('bgRLextend');
 		}
 	});
-	// service-area (サービスエリアのアニメーション開始)
 	var serviceArea = $('.service-area');
-	if (serviceArea.length) { // 要素が存在する場合のみ
+	if (serviceArea.length) {
 		serviceArea.each(function () {
 			var elemPos = $(this).offset().top - 50;
 			var scroll = $(window).scrollTop();
@@ -278,9 +203,8 @@ function fadeAnime() {
 			}
 		});
 	}
-	// #service1 .service-area (GALLERY.html用)
 	var service1Area = $('#service1 .service-area');
-	if (service1Area.length) { // 要素が存在する場合のみ
+	if (service1Area.length) {
 		service1Area.each(function () {
 			var elemPos = $(this).offset().top - 50;
 			var scroll = $(window).scrollTop();
@@ -292,9 +216,8 @@ function fadeAnime() {
 			}
 		});
 	}
-	// news-img-wrapper
 	var newsImgWrapper = $('.news-img-wrapper');
-	if (newsImgWrapper.length) { // 要素が存在する場合のみ
+	if (newsImgWrapper.length) {
 		newsImgWrapper.each(function () {
 			var elemPos = $(this).offset().top - 50;
 			var scroll = $(window).scrollTop();
@@ -308,22 +231,22 @@ function fadeAnime() {
 	}
 }
 
-// アルファベットがランダムに変化して出現 (ShuffleText) (jQuery)
+// ShuffleText初期化
 function TypingInit() {
 	var jsTypingElements = $('.js_typing');
-	if (jsTypingElements.length) { // 要素が存在する場合のみ
+	if (jsTypingElements.length) {
 		jsTypingElements.each(function (i) {
-			if (!shuffleTextInstances[i]) { // 既にインスタンスが存在しない場合にのみ作成
+			if (!shuffleTextInstances[i]) {
 				shuffleTextInstances[i] = new ShuffleText(this);
 			}
 		});
 	}
 }
 
-// スクロールした際のアニメーションの設定（一度実行されたらリセットしないバージョン）
+// タイピングアニメーション実行
 function TypingAnime() {
 	var jsTypingElements = $(".js_typing");
-	if (jsTypingElements.length) { // 要素が存在する場合のみ
+	if (jsTypingElements.length) {
 		jsTypingElements.each(function (i) {
 			var elemPos = $(this).offset().top - 50;
 			var scroll = $(window).scrollTop();
@@ -337,29 +260,28 @@ function TypingAnime() {
 					}
 				}
 			}
-			// else ブロックを削除：一度アニメーションしたらリセットしない挙動を維持
 		});
 	}
 }
 
-// 虫眼鏡マークをクリックすると全画面表示で検索窓が出現 (jQuery)
+// 検索オーバーレイ設定
 function setupSearchOverlay() {
 	var searchWrap = $("#search-wrap");
 	var openBtn = $(".search-open-btn");
 	var closeBtn = $(".close-btn");
 
-	if (openBtn.length) { // 要素が存在する場合のみ
+	if (openBtn.length) {
 		openBtn.click(function () {
 			if (searchWrap.length) {
 				searchWrap.addClass('panelactive');
-				var passInput = $('#pass'); // IDは'pass'
+				var passInput = $('#pass');
 				if (passInput.length) {
 					passInput.focus();
 				}
 			}
 		});
 	}
-	if (closeBtn.length) { // 要素が存在する場合のみ
+	if (closeBtn.length) {
 		closeBtn.click(function () {
 			if (searchWrap.length) {
 				searchWrap.removeClass('panelactive');
@@ -368,7 +290,7 @@ function setupSearchOverlay() {
 	}
 }
 
-//アコーディオン (jQuery)
+// アコーディオン設定
 function setupAccordion() {
 	$('.title3').on('click', function () {
 		var findElm = $(this).next(".box3");
@@ -380,24 +302,19 @@ function setupAccordion() {
 			$(this).addClass('close');
 		}
 	});
-
-	// ページ読み込み時に最初のアコーディオンを開く (loadイベントで実行)
-	// $(window).on('load', function() { ... }); の中に移動
 }
 
 /*===========================================================*/
 /* オーディオスペクトラム描画関数 */
 /*===========================================================*/
 
-// 擬似スペクトラムの描画関数 (メインコンテンツ背景用)
+// 擬似スペクトラム（メイン用）
 function drawPseudoSpectrum() {
 	mainSpectrumAnimationFrameId = requestAnimationFrame(drawPseudoSpectrum);
 
-	// canvas contextのチェック
 	if (typeof mainSpectrumCtx === 'undefined' || !mainSpectrumCtx || typeof audioSpectrumCanvas === 'undefined' || !audioSpectrumCanvas) {
-		console.error("Main audioSpectrumCanvas context not initialized. Skipping animation.");
 		cancelAnimationFrame(mainSpectrumAnimationFrameId);
-		mainSpectrumAnimationFrameId = null; // IDをリセット
+		mainSpectrumAnimationFrameId = null;
 		return;
 	}
 
@@ -406,67 +323,56 @@ function drawPseudoSpectrum() {
 	const centerX = audioSpectrumCanvas.width / 2;
 	const centerY = audioSpectrumCanvas.height / 2;
 	const baseRadius = Math.min(centerX, centerY) * 0.5;
+	const maxBarHeight = 280;
 
-	const maxBarHeight = 280; // 最大の高さを少し上げる（重低音のインパクト）
-
-	// 重低音の拍動をシミュレートする時間ベースの強度 (ゆっくり、重く)
-	const bpm = 40; // BPMを低くしてゆっくりとした拍動に
+	const bpm = 40;
 	const beatPhase = (Date.now() / 1000) * (2 * Math.PI * (bpm / 60));
-	let beatStrength = (Math.sin(beatPhase) + 1) / 2; // 0から1の間で変化
-	// 急激な立ち上がりと非常にゆっくりとした減衰を表現
-	beatStrength = Math.pow(beatStrength, 2.5); // 立ち上がりをさらに強調し、ピークを鋭く
-	if (beatStrength > 0.6) beatStrength = 0.6 + (beatStrength - 0.6) * 0.3; // ピーク後の減衰を非常に緩やかに
+	let beatStrength = (Math.sin(beatPhase) + 1) / 2;
+	beatStrength = Math.pow(beatStrength, 2.5);
+	if (beatStrength > 0.6) beatStrength = 0.6 + (beatStrength - 0.6) * 0.3;
 
-	const timePhase = Date.now() * 0.002; // 全体的な揺らぎのテンポをさらにゆっくりに
+	const timePhase = Date.now() * 0.002;
 
 	for (let i = 0; i < mainSpectrumNumBars; i++) {
 		const angle = (i / mainSpectrumNumBars) * Math.PI * 2;
-
-		// 中心に近いバーほど重低音の拍動の影響を強く受ける
 		const normalizedIndex = i / mainSpectrumNumBars;
-		// 外側に行くほど影響が減少するが、全体的に影響は残す
-		const beatInfluence = 1 - Math.pow(normalizedIndex, 1.0); // 外側でも影響を感じるように
+		const beatInfluence = 1 - Math.pow(normalizedIndex, 1.0);
 
-		// ノイズの周期と振幅を調整
-		const noise1 = Math.sin(timePhase * 0.4 + i * 0.05) * 0.5 + 0.5; // ゆっくりとした低周波ノイズ
-		const noise2 = Math.sin(timePhase * 1.0 + i * 0.1) * 0.5 + 0.5; // 少し早い中周波ノイズ
+		const noise1 = Math.sin(timePhase * 0.4 + i * 0.05) * 0.5 + 0.5;
+		const noise2 = Math.sin(timePhase * 1.0 + i * 0.1) * 0.5 + 0.5;
 
-		// 拍動の強度を組み込んだ高さ計算
 		let rawHeight = (
-			0.1 + // ベースの高さ
+			0.1 +
 			(0.7 * Math.sin(angle * 2 + timePhase * 0.8) * noise1 +
-				0.3 * Math.cos(angle * 5 + timePhase * 1.2) * noise2) * // 中音域の細かい波
-			(0.4 + beatStrength * 0.6 * beatInfluence) // 重低音の拍動による影響を強く
+				0.3 * Math.cos(angle * 5 + timePhase * 1.2) * noise2) *
+			(0.4 + beatStrength * 0.6 * beatInfluence)
 		);
 		rawHeight = Math.max(0, rawHeight);
 
 		mainSpectrumTargetBarHeights[i] = maxBarHeight * rawHeight;
 
-		// スムージングと減衰を、重低音の重さを表現するように調整
 		const currentToTargetDiff = mainSpectrumTargetBarHeights[i] - mainSpectrumCurrentBarHeights[i];
-		if (currentToTargetDiff > 0) { // 立ち上がる時
-			mainSpectrumCurrentBarHeights[i] += currentToTargetDiff * 0.2; // 立ち上がりは少し速く
-		} else { // 減衰する時
-			mainSpectrumCurrentBarHeights[i] += currentToTargetDiff * 0.05; // 減衰を非常にゆっくりに
+		if (currentToTargetDiff > 0) {
+			mainSpectrumCurrentBarHeights[i] += currentToTargetDiff * 0.2;
+		} else {
+			mainSpectrumCurrentBarHeights[i] += currentToTargetDiff * 0.05;
 		}
 
-		mainSpectrumCurrentBarHeights[i] *= 0.98; // 減衰係数を高くして、残響を長く残す
+		mainSpectrumCurrentBarHeights[i] *= 0.98;
 		mainSpectrumCurrentBarHeights[i] = Math.max(mainSpectrumCurrentBarHeights[i], 1);
-
 
 		const startX = centerX + Math.cos(angle) * baseRadius;
 		const startY = centerY + Math.sin(angle) * baseRadius;
 		const endX = centerX + Math.cos(angle) * (baseRadius + mainSpectrumCurrentBarHeights[i]);
 		const endY = centerY + Math.sin(angle) * (baseRadius + mainSpectrumCurrentBarHeights[i]);
 
-		// 色の調整：重低音のピーク時に、色相を深め、彩度と明るさを強調
 		const currentHeightRatio = mainSpectrumCurrentBarHeights[i] / maxBarHeight;
-		const baseHue = (timePhase * 10 + i * 0.3) % 360; // 色相の変化をよりゆっくりに
-		const hue = (baseHue + beatStrength * 30) % 360; // 拍動時に色相を少しずらす
-		const saturation = `${80 + beatStrength * 20 + currentHeightRatio * 10}%`; // 拍動時に彩度を強く
-		const lightness = `${40 + currentHeightRatio * 20 + beatStrength * 20}%`; // 拍動時に明るさを強調
+		const baseHue = (timePhase * 10 + i * 0.3) % 360;
+		const hue = (baseHue + beatStrength * 30) % 360;
+		const saturation = `${80 + beatStrength * 20 + currentHeightRatio * 10}%`;
+		const lightness = `${40 + currentHeightRatio * 20 + beatStrength * 20}%`;
 		mainSpectrumCtx.strokeStyle = `hsl(${hue}, ${saturation}, ${lightness})`;
-		mainSpectrumCtx.lineWidth = 4; // 線を太くして重厚感を出す
+		mainSpectrumCtx.lineWidth = 4;
 
 		mainSpectrumCtx.beginPath();
 		mainSpectrumCtx.moveTo(startX, startY);
@@ -475,13 +381,9 @@ function drawPseudoSpectrum() {
 	}
 }
 
-// 擬似スペクトラムの描画関数 (画面遷移用)
-// リンククリック時のロード画面を削除するため、この関数は初回ロード時以外は呼び出されません
+// 擬似スペクトラム（遷移用）
 function drawTransitionSpectrum() {
-	// この関数は意図的に、初期ロード時（pageTransitionOverlayにinitial-load-activeクラスがある場合）のみ呼び出されます。
-	// それ以外で呼び出された場合はエラーログを出力します。
 	if (pageTransitionOverlay && !pageTransitionOverlay.classList.contains('initial-load-active')) {
-		console.warn("drawTransitionSpectrum was called unexpectedly. It should only run on initial page load.");
 		if (transitionAnimationFrameId) {
 			cancelAnimationFrame(transitionAnimationFrameId);
 			transitionAnimationFrameId = null;
@@ -491,11 +393,9 @@ function drawTransitionSpectrum() {
 
 	transitionAnimationFrameId = requestAnimationFrame(drawTransitionSpectrum);
 
-	// tCtx が存在するかチェック
 	if (typeof tCtx === 'undefined' || !tCtx || typeof transitionSpectrumCanvas === 'undefined' || !transitionSpectrumCanvas) {
-		console.error("transitionSpectrumCanvas context not initialized. Skipping transition animation.");
 		cancelAnimationFrame(transitionAnimationFrameId);
-		transitionAnimationFrameId = null; // IDをリセット
+		transitionAnimationFrameId = null;
 		return;
 	}
 
@@ -503,50 +403,43 @@ function drawTransitionSpectrum() {
 
 	const centerX = transitionSpectrumCanvas.width / 2;
 	const centerY = transitionSpectrumCanvas.height / 2;
-	const baseRadiusX = centerX * 0.75;   // 横に広め
-	const baseRadiusY = centerY * 0.45;  // 縦にやや抑えめ
+	const baseRadiusX = centerX * 0.75;
+	const baseRadiusY = centerY * 0.45;
+	const maxBarHeight = 120;
 
-	const maxBarHeight = 120; // バーの長さもやや大きめ
-
-
-
-	// 重低音の拍動 (遷移用なのでメインよりは少し速めだが、重さは残す)
-	const bpm = 50; // メインより少し速いBPM
+	const bpm = 50;
 	const beatPhase = (Date.now() / 1000) * (2 * Math.PI * (bpm / 60));
 	let beatStrength = (Math.sin(beatPhase) + 1) / 2;
-	beatStrength = Math.pow(beatStrength, 2.0); // 立ち上がりを強調
-	if (beatStrength > 0.5) beatStrength = 0.5 + (beatStrength - 0.5) * 0.4; // 減衰を緩やかに
+	beatStrength = Math.pow(beatStrength, 2.0);
+	if (beatStrength > 0.5) beatStrength = 0.5 + (beatStrength - 0.5) * 0.4;
 
-	const currentPhase = (Date.now() * 0.005) % (Math.PI * 2); // 全体的な揺らぎのテンポ
+	const currentPhase = (Date.now() * 0.005) % (Math.PI * 2);
 
 	for (let i = 0; i < transitionNumBars; i++) {
 		const angle = (i / transitionNumBars) * Math.PI * 2;
-
 		const normalizedIndex = i / transitionNumBars;
-		const beatInfluence = 1 - Math.pow(normalizedIndex, 0.8); // 拍動の影響を全体的に強く
+		const beatInfluence = 1 - Math.pow(normalizedIndex, 0.8);
 
 		const noise1 = Math.sin(currentPhase * 0.6 + i * 0.08) * 0.5 + 0.5;
 		const noise2 = Math.cos(currentPhase * 1.2 + i * 0.1) * 0.5 + 0.5;
 
-		// 拍動の強度を組み込んだ高さ計算
 		let rawHeight = (
 			0.2 +
 			(0.6 * Math.sin(angle * 3 + currentPhase * 1.0) * noise1 +
-				0.4 * Math.cos(angle * 5 + currentPhase * 1.5) * noise2) * (0.5 + beatStrength * 0.8 * beatInfluence) // 拍動の影響をより強く
+				0.4 * Math.cos(angle * 5 + currentPhase * 1.5) * noise2) * (0.5 + beatStrength * 0.8 * beatInfluence)
 		);
 		rawHeight = Math.max(0, rawHeight);
 
 		transitionTargetHeights[i] = maxBarHeight * rawHeight;
 
-		// 立ち上がりと減衰の調整 (遷移用なので、ある程度のキレは残しつつ重さを表現)
 		const currentToTargetDiff = transitionTargetHeights[i] - transitionBarHeights[i];
 		if (currentToTargetDiff > 0) {
-			transitionBarHeights[i] += currentToTargetDiff * 0.25; // 立ち上がりはそこそこ速く
+			transitionBarHeights[i] += currentToTargetDiff * 0.25;
 		} else {
-			transitionBarHeights[i] += currentToTargetDiff * 0.1; // 減衰をゆっくりに
+			transitionBarHeights[i] += currentToTargetDiff * 0.1;
 		}
 
-		transitionBarHeights[i] *= 0.97; // 残響を少し長く
+		transitionBarHeights[i] *= 0.97;
 		transitionBarHeights[i] = Math.max(transitionBarHeights[i], 1);
 
 		const startX = centerX + Math.cos(angle) * baseRadiusX;
@@ -554,15 +447,13 @@ function drawTransitionSpectrum() {
 		const endX = centerX + Math.cos(angle) * (baseRadiusX + transitionBarHeights[i]);
 		const endY = centerY + Math.sin(angle) * (baseRadiusY + transitionBarHeights[i]);
 
-
-		// 色の調整：重低音のピーク時に、色相を深め、彩度と明るさを強調
 		const currentHeightRatio = transitionBarHeights[i] / maxBarHeight;
 		const baseHue = (currentPhase * 20 + i * 0.5) % 360;
-		const hue = (baseHue + beatStrength * 40) % 360; // 拍動時に色相を大きくずらす
-		const saturation = `${90 + beatStrength * 10 + currentHeightRatio * 5}%`; // 拍動時に彩度を強調
-		const lightness = `${50 + currentHeightRatio * 20 + beatStrength * 15}%`; // 拍動時に明るさを強調
+		const hue = (baseHue + beatStrength * 40) % 360;
+		const saturation = `${90 + beatStrength * 10 + currentHeightRatio * 5}%`;
+		const lightness = `${50 + currentHeightRatio * 20 + beatStrength * 15}%`;
 		tCtx.strokeStyle = `hsl(${hue}, ${saturation}, ${lightness})`;
-		tCtx.lineWidth = 5; // 線を太くして重厚感を出す
+		tCtx.lineWidth = 5;
 
 		tCtx.beginPath();
 		tCtx.moveTo(startX, startY);
@@ -573,88 +464,71 @@ function drawTransitionSpectrum() {
 
 
 /*===========================================================*/
-/* ページロード時の初期化とイベントリスナー設定 (DOMContentLoaded & Load) */
+/* ページロード時の初期化とイベントリスナー設定 */
 /*===========================================================*/
 
-// DOMContentLoaded イベントリスナー: DOM構築後、画像などのリソース読み込み前
 document.addEventListener("DOMContentLoaded", () => {
-	// Light/Dark Mode Toggle
 	const toggleBtn = document.getElementById("modeToggle");
 	const icon = document.getElementById("modeIcon");
 	const body = document.body;
 
 	if (toggleBtn && icon) {
-		// localStorageから保存されたテーマを読み込み
 		const savedTheme = localStorage.getItem("theme");
 		if (savedTheme === "light") {
 			body.classList.add("light-mode");
-			body.classList.remove("dark-mode"); // デフォルトがdark-modeの場合に備えて
-			icon.src = IMAGE_BASE_PATH + "light.svg"; // グローバル変数 IMAGE_BASE_PATH を使用
+			body.classList.remove("dark-mode");
+			icon.src = IMAGE_BASE_PATH + "light.svg";
 		} else {
-			// デフォルトはダークモード (localStorageにthemeがないか、"dark"の場合)
-			body.classList.add("dark-mode"); // bodyに明示的にクラスを追加
+			body.classList.add("dark-mode");
 			body.classList.remove("light-mode");
-			icon.src = IMAGE_BASE_PATH + "dark.svg"; // グローバル変数 IMAGE_BASE_PATH を使用
+			icon.src = IMAGE_BASE_PATH + "dark.svg";
 		}
 
 		toggleBtn.addEventListener("click", () => {
 			body.classList.toggle("light-mode");
-			body.classList.toggle("dark-mode"); // light-modeとdark-modeを相互に切り替える
+			body.classList.toggle("dark-mode");
 			const isLight = body.classList.contains("light-mode");
 			icon.src = isLight ? IMAGE_BASE_PATH + "light.svg" : IMAGE_BASE_PATH + "dark.svg";
 			localStorage.setItem("theme", isLight ? "light" : "dark");
 		});
 	}
 
-	// --- メインページのオーディオスペクトラム (擬似データ生成) 初期化 ---
-	audioSpectrumCanvas = document.getElementById('audioSpectrumCanvas'); // グローバル変数への代入
+	audioSpectrumCanvas = document.getElementById('audioSpectrumCanvas');
 	if (audioSpectrumCanvas) {
-		mainSpectrumCtx = audioSpectrumCanvas.getContext('2d'); // グローバル変数への代入
-		// キャンバスのサイズを動的に調整
+		mainSpectrumCtx = audioSpectrumCanvas.getContext('2d');
 		audioSpectrumCanvas.width = audioSpectrumCanvas.clientWidth;
 		audioSpectrumCanvas.height = audioSpectrumCanvas.clientHeight;
-		// 初期状態では非表示にし、ロード完了時に表示・アニメーション開始
 		audioSpectrumCanvas.style.display = 'none';
 	}
 
-	// ページ遷移のクリックイベントを既存のナビゲーションリンクに適用
 	const internalLinks = document.querySelectorAll(
 		'#g-navi a, .btnlinestretches2, .freshman a, a[href^="Public/"], a[href$=".html"]'
 	);
 
 	internalLinks.forEach(link => {
-		// 同じページ内へのアンカーリンクは対象外とする
 		if (link.href.startsWith(window.location.origin + window.location.pathname + '#')) {
 			return;
 		}
-		// 外部サイトへのリンクは対象外とする
 		if (!link.href.startsWith(window.location.origin)) {
 			return;
 		}
-		// ログインフォームのリンクはJSで制御されているため対象外 (ID: login_form)
 		var loginForm = document.getElementById('login_form');
-		if (loginForm && link.closest('#search-wrap')) { // search-wrap内のリンクはlogin_formと関連付けて除外
+		if (loginForm && link.closest('#search-wrap')) {
 			return;
 		}
 
 		link.addEventListener('click', function (e) {
-			e.preventDefault(); // デフォルトの遷移をキャンセル
+			e.preventDefault();
 			const targetUrl = this.href;
 
-			// メインのスペクトラムアニメーションを停止
 			if (mainSpectrumAnimationFrameId) {
 				cancelAnimationFrame(mainSpectrumAnimationFrameId);
 				mainSpectrumAnimationFrameId = null;
 			}
-			// 背景のオーディオスペクトラムを非表示にする
 			if (audioSpectrumCanvas) {
 				audioSpectrumCanvas.style.display = 'none';
 			}
-
-			// リンククリック時のロード画面オーバーレイは表示しないため、関連処理を削除
-			// pageTransitionOverlayはDOMContentLoadedで初期ロード用にのみ設定・描画
 			if (pageTransitionOverlay) {
-				// 念のため、現在表示されていてもすぐに非表示にする
 				pageTransitionOverlay.style.display = 'none';
 				pageTransitionOverlay.classList.remove('active');
 				if (transitionAnimationFrameId) {
@@ -662,13 +536,10 @@ document.addEventListener("DOMContentLoaded", () => {
 					transitionAnimationFrameId = null;
 				}
 			}
-
-			// 実際のページ遷移をすぐに実行 (ロード画面のアニメーションなし)
 			window.location.href = targetUrl;
 		});
 	});
 
-	// 初回ロード時のオーバーレイ処理のみここに記述
 	pageTransitionOverlay = document.getElementById('page-transition-overlay');
 	if (pageTransitionOverlay) {
 		transitionSpectrumCanvas = document.getElementById('transitionSpectrumCanvas');
@@ -677,48 +548,39 @@ document.addEventListener("DOMContentLoaded", () => {
 			transitionSpectrumCanvas.width = 300;
 			transitionSpectrumCanvas.height = 300;
 		}
-		// HTML側でinitial-load-activeクラスが設定されている場合のみ、ロードアニメーションを開始
 		if (pageTransitionOverlay.classList.contains('initial-load-active')) {
-			pageTransitionOverlay.style.display = 'flex'; // オーバーレイを表示
-			drawTransitionSpectrum(); // ロード画面アニメーションを開始
+			pageTransitionOverlay.style.display = 'flex';
+			drawTransitionSpectrum();
 		} else {
-			// initial-load-activeがない場合は、オーバーレイを非表示に保つ
 			pageTransitionOverlay.style.display = 'none';
 		}
 	}
 });
 
-
-// $(window).on('load') イベントリスナー: ページ内の全てのリソース読み込み後
 $(window).on('load', function () {
-
-	// === ページ初期ロード時のオーディオスペクトラムオーバーレイの処理 (フェードアウトとメイン表示) ===
 	pageTransitionOverlay = document.getElementById('page-transition-overlay');
 	if (pageTransitionOverlay && pageTransitionOverlay.classList.contains('initial-load-active')) {
-		const initialLoadFadeOutDelay = 1500; // この時間だけロード画面を表示
-		const fadeOutDuration = 500; // ロード画面がフェードアウトする時間
+		const initialLoadFadeOutDelay = 1500;
+		const fadeOutDuration = 500;
 
 		setTimeout(() => {
-			// ロード画面のアニメーション終了後、クラスを削除してCSSでフェードアウトさせる
 			pageTransitionOverlay.classList.remove('initial-load-active');
-			pageTransitionOverlay.classList.remove('active'); // activeクラスも念のため削除
+			pageTransitionOverlay.classList.remove('active');
 
 			setTimeout(() => {
 				if (transitionAnimationFrameId) {
 					cancelAnimationFrame(transitionAnimationFrameId);
 					transitionAnimationFrameId = null;
 				}
-				pageTransitionOverlay.style.display = 'none'; // 完全非表示
+				pageTransitionOverlay.style.display = 'none';
 
 				if (audioSpectrumCanvas) {
-					audioSpectrumCanvas.style.display = 'block'; // メインスペクトラムを表示
-					drawPseudoSpectrum(); // メインスペクトラムアニメーションを開始
+					audioSpectrumCanvas.style.display = 'block';
+					drawPseudoSpectrum();
 				}
-			}, fadeOutDuration); // フェードアウトが完了するのを待ってからdisplay:noneにする
+			}, fadeOutDuration);
 		}, initialLoadFadeOutDelay);
 	} else {
-		// initial-load-activeがない場合（例: 戻るボタンでページに戻ってきた場合、または直接アクセスしたがinitial-load-activeがなかった場合）
-		// オーバーレイをすぐに非表示にし、メインスペクトラムを開始する
 		if (pageTransitionOverlay) {
 			pageTransitionOverlay.style.display = 'none';
 			pageTransitionOverlay.classList.remove('active');
@@ -734,42 +596,37 @@ $(window).on('load', function () {
 		}
 	}
 
-
-	// --- 既存のローディング完了後の処理 ---
 	$('body').addClass('appear');
 
-	// 共通の機能呼び出し
 	mediaQueriesWin();
 	FixedAnime();
 	setFadeElement();
 	setupHamburgerMenu();
 
-	// タブメニューの初期化
 	var tabLiFirst = $('.tab li:first-of-type');
 	var areaFirst = $('.area:first-of-type');
-	if (tabLiFirst.length && areaFirst.length) { // 要素が存在する場合のみ
+	if (tabLiFirst.length && areaFirst.length) {
 		tabLiFirst.addClass("active");
 		areaFirst.addClass("is-active");
 		var hashName = location.hash;
 		GethashID(hashName);
 	}
 
-	// フェードアニメーション
 	fadeAnime();
 
-	// タイピングアニメーションの初期化と実行
 	var jsTypingElements = $(".js_typing");
 	if (jsTypingElements.length) {
-		TypingInit(); // 全js_typing要素をShuffleTextインスタンス化
+		TypingInit();
 		TypingAnime();
 	}
 
-	// Vegas.js スライダーの初期化
-	initVegasSlider();
+	// ==========================================================
+	// Vegasの記述を完全に削除しました。
+	// エラーを消すために、Astro側でVegasを初期化してください。
+	// ==========================================================
 
-	// Muuriギャラリープラグイン設定
 	var gridElem = $('.grid');
-	if (gridElem.length) { // .grid要素が存在する場合のみ
+	if (gridElem.length) {
 		var grid = new Muuri('.grid', {
 			showDuration: 600,
 			showEasing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
@@ -779,7 +636,6 @@ $(window).on('load', function () {
 			hiddenStyles: { opacity: '0', transform: 'scale(0.5)' }
 		});
 
-		// 並び替えボタン設定
 		var sortBtn = $('.sort-btn li');
 		if (sortBtn.length) {
 			sortBtn.on('click', function () {
@@ -796,8 +652,6 @@ $(window).on('load', function () {
 		}
 	}
 
-
-	// Fancyboxの設定
 	var fancyboxElements = $('[data-fancybox]');
 	if (fancyboxElements.length) {
 		fancyboxElements.fancybox({
@@ -805,7 +659,6 @@ $(window).on('load', function () {
 		});
 	}
 
-	//アコーディオンの初期表示
 	var accordionArea = $('.accordion-area li:first-of-type section');
 	if (accordionArea.length) {
 		accordionArea.addClass("open");
@@ -820,21 +673,18 @@ $(window).on('load', function () {
 	setupSearchOverlay();
 });
 
-
-// スクロールイベントは$(window).on('scroll', ...)でまとめて管理します。
 $(window).scroll(function () {
 	FixedAnime();
 	setFadeElement();
 	fadeAnime();
-	TypingAnime(); // スクロール時にアニメーションを制御
+	TypingAnime();
 });
 
-// アコーディオンのイベントリスナー設定 (DOMContentLoaded または $(document).ready() で一度だけ実行)
-$(function () { // jQuery shorthand for $(document).ready(function() { ... });
-	setupAccordion(); // アコーディオンのイベントリスナー設定
+$(function () {
+	setupAccordion();
 	$('.tab a').on('click', function () {
 		var idName = $(this).attr('href');
-		GethashID(idName); // 設定したタブの読み込み
-		return false; // aタグを無効にする
+		GethashID(idName);
+		return false;
 	});
 });

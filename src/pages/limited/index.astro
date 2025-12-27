@@ -1,23 +1,45 @@
 ---
 // src/pages/limited/index.astro
 import Layout from "../../layouts/Layout.astro";
-
-// ▼ 共通ファイルから読み込み（階層注意: ../../）
 import { client } from "../../lib/microcms";
 import type { MicroCMSListResponse } from "../../lib/microcms";
 
+// ▼ ニュース＆画像の型定義
 type News = {
     id: string;
     title: string;
     date: string;
     url?: string;
+    top_image?: { url: string };
 };
 
-// ▼ ニュース取得
+// ▼ 1. ニュース一覧用（テキスト表示用）
+// ★修正：「日付(date)」が入っている記事だけを取得（Invalid Date対策）
 const response = await client.get<MicroCMSListResponse<News>>({
     endpoint: "news",
-    queries: { fields: ["id", "title", "date", "url"] },
+    queries: {
+        fields: ["id", "title", "date", "url"],
+        filters: "date[exists]", // ★ここが重要！
+        limit: 5,
+    },
 });
+
+// ▼ 2. スライドショー用画像の取得
+// 「トップ用画像(top_image)」がある記事だけを抽出してスライドショー化
+const sliderResponse = await client.get<MicroCMSListResponse<News>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image"],
+        filters: "top_image[exists]",
+        limit: 10,
+    },
+});
+
+// ▼ Vegas.js形式に変換
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image.url,
+}));
 ---
 
 <Layout title="LIMITED_MAIN" isLimited={true}>
@@ -71,12 +93,11 @@ const response = await client.get<MicroCMSListResponse<News>>({
     <main id="main-area">
         <section id="service">
             <h2 class="js_typing">Members Only</h2>
-
             <p class="service-lead">
                 <span class="bgextend bgRLextendTrigger">
-                    <span class="bgappearTrigger">
-                        こちらは部員限定エリアです。
-                    </span>
+                    <span class="bgappearTrigger"
+                        >こちらは部員限定エリアです。</span
+                    >
                 </span>
             </p>
 
@@ -90,13 +111,11 @@ const response = await client.get<MicroCMSListResponse<News>>({
                             <img src="/img/main/top1.jpg" alt="Member Icon" />
                         </div>
                         <div class="card-content">
-                            <h3>MEMBERS</h3>
-                            <p>部員紹介</p>
+                            <h3>MEMBERS</h3><p>部員紹介</p>
                         </div>
                         <div class="card-arrow">→</div>
                     </div>
                 </a>
-
                 <a
                     href="/limited/gallery"
                     class="menu-card bgextend bgLRextendTrigger"
@@ -106,13 +125,11 @@ const response = await client.get<MicroCMSListResponse<News>>({
                             <img src="/img/main/top2.jpg" alt="Gallery Icon" />
                         </div>
                         <div class="card-content">
-                            <h3>GALLERY</h3>
-                            <p>活動写真</p>
+                            <h3>GALLERY</h3><p>活動写真</p>
                         </div>
                         <div class="card-arrow">→</div>
                     </div>
                 </a>
-
                 <a
                     href="/limited/live"
                     class="menu-card bgextend bgLRextendTrigger"
@@ -122,13 +139,11 @@ const response = await client.get<MicroCMSListResponse<News>>({
                             <img src="/img/main/top3.jpg" alt="Live Icon" />
                         </div>
                         <div class="card-content">
-                            <h3>LIVE ARCHIVE</h3>
-                            <p>ライブ情報</p>
+                            <h3>LIVE ARCHIVE</h3><p>ライブ情報</p>
                         </div>
                         <div class="card-arrow">→</div>
                     </div>
                 </a>
-
                 <a
                     href="/limited/schedule"
                     class="menu-card bgextend bgLRextendTrigger"
@@ -138,8 +153,7 @@ const response = await client.get<MicroCMSListResponse<News>>({
                             <img src="/img/main/top4.jpg" alt="Schedule Icon" />
                         </div>
                         <div class="card-content">
-                            <h3>SCHEDULE</h3>
-                            <p>スケジュール</p>
+                            <h3>SCHEDULE</h3><p>スケジュール</p>
                         </div>
                         <div class="card-arrow">→</div>
                     </div>
@@ -192,9 +206,36 @@ const response = await client.get<MicroCMSListResponse<News>>({
                 </div>
             </div>
         </section>
-
         <section id="contact"></section>
     </main>
+
+    <script is:inline define:vars={{ vegasImages }}>
+        // jQuery読み込み後に実行
+        $(window).on("load", function () {
+            // デフォルト画像（パスを絶対パス風に修正）
+            const defaultImages = [
+                { src: "/img/main/top8.jpg" },
+                { src: "/img/main/top9.jpg" },
+                { src: "/img/main/top10.jpg" },
+            ];
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
+            setTimeout(function () {
+                $("#slider").vegas("destroy");
+                $("#slider").vegas({
+                    overlay: false,
+                    transition: "fade2",
+                    transitionDuration: 1500,
+                    delay: 4000,
+                    animationDuration: 1500,
+                    animation: "kenburns",
+                    slides: finalImages,
+                    timer: false,
+                });
+            }, 100);
+        });
+    </script>
 
     <style>
         .limited-menu-container {
@@ -206,9 +247,7 @@ const response = await client.get<MicroCMSListResponse<News>>({
             padding: 0 20px;
         }
 
-        /* --------------------------------------------------
-         * ▼▼▼ デフォルト（ダークモード）のデザイン ▼▼▼
-         * -------------------------------------------------- */
+        /* カードのデザイン */
         .menu-card {
             display: block;
             text-decoration: none;
@@ -248,12 +287,11 @@ const response = await client.get<MicroCMSListResponse<News>>({
             background: rgba(255, 255, 255, 0.1);
         }
 
-        /* ▼▼▼ アイコン画像の円形切り抜き設定（エラー修正済み） ▼▼▼ */
         .card-icon {
             width: 60px;
             height: 60px;
             margin-right: 20px;
-            border-radius: 50%; /* ここが修正ポイント */
+            border-radius: 50%;
             overflow: hidden;
             border: 2px solid #555;
             box-sizing: border-box;
@@ -265,13 +303,11 @@ const response = await client.get<MicroCMSListResponse<News>>({
                 border-color 0.3s,
                 transform 0.3s;
         }
-
         .card-icon img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-
         .menu-card:hover .card-icon {
             border-color: #b22222;
             transform: scale(1.1);
@@ -309,22 +345,18 @@ const response = await client.get<MicroCMSListResponse<News>>({
             transform: translateX(5px);
         }
 
-        /* --------------------------------------------------
-         * ▼▼▼ ライトモード時の上書き設定 ▼▼▼
-         * -------------------------------------------------- */
+        /* ライトモード対応 */
         :global(body.light-mode) .menu-card,
         :global(body.light) .menu-card {
             background: #fff;
             color: #333;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-
         :global(body.light-mode) .card-inner,
         :global(body.light) .card-inner {
             background: rgba(0, 0, 0, 0.02);
             border-left-color: #ccc;
         }
-
         :global(body.light-mode) .menu-card:hover,
         :global(body.light) .menu-card:hover {
             box-shadow: 0 10px 25px rgba(0, 102, 204, 0.2);
@@ -334,7 +366,6 @@ const response = await client.get<MicroCMSListResponse<News>>({
             border-left-color: #0066cc;
             background: #fff;
         }
-
         :global(body.light-mode) .card-content h3,
         :global(body.light) .card-content h3 {
             color: #333;
@@ -343,7 +374,6 @@ const response = await client.get<MicroCMSListResponse<News>>({
         :global(body.light) .card-content p {
             color: #666;
         }
-
         :global(body.light-mode) .card-icon,
         :global(body.light) .card-icon {
             border-color: #ccc;
@@ -352,7 +382,6 @@ const response = await client.get<MicroCMSListResponse<News>>({
         :global(body.light) .menu-card:hover .card-icon {
             border-color: #0066cc;
         }
-
         :global(body.light-mode) .card-arrow,
         :global(body.light) .card-arrow {
             color: #ccc;
@@ -379,52 +408,43 @@ const response = await client.get<MicroCMSListResponse<News>>({
                 font-size: 1.2rem;
             }
         }
+
+        /* ニュースリストのスタイル */
+        #news-list {
+            padding: 0;
+            list-style: none;
+            text-align: left !important;
+        }
+        #news-list li {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 5px;
+        }
+        #news-list time {
+            font-size: 0.85rem;
+            color: #aaa;
+            font-family: "Oswald", sans-serif;
+            letter-spacing: 0.05em;
+            margin: 0;
+            line-height: 1;
+        }
+        #news-list a,
+        #news-list span {
+            font-size: 1rem;
+            line-height: 1.5;
+            display: block;
+            text-decoration: none;
+            text-align: left;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+        #news-list a:hover {
+            opacity: 0.7;
+        }
     </style>
-
-    <script is:inline>
-        $(window).on("load", function () {
-            setTimeout(function () {
-                $("#slider").vegas("destroy");
-
-                var windowwidth =
-                    window.innerWidth ||
-                    document.documentElement.clientWidth ||
-                    0;
-                var responsiveImage = [];
-
-                if (windowwidth > 768) {
-                    // PC用 (top8 ～ top13)
-                    responsiveImage = [
-                        { src: "/img/main/top8.jpg" },
-                        { src: "/img/main/top9.jpg" },
-                        { src: "/img/main/top10.jpg" },
-                        { src: "/img/main/top11.jpg" },
-                        { src: "/img/main/top12.jpg" },
-                        { src: "/img/main/top13.jpg" },
-                    ];
-                } else {
-                    // スマホ用 (top1 ～ top6)
-                    responsiveImage = [
-                        { src: "/img/main/top1.jpg" },
-                        { src: "/img/main/top2.jpg" },
-                        { src: "/img/main/top3.jpg" },
-                        { src: "/img/main/top4.jpg" },
-                        { src: "/img/main/top5.jpg" },
-                        { src: "/img/main/top6.jpg" },
-                    ];
-                }
-
-                $("#slider").vegas({
-                    overlay: false,
-                    transition: "fade2",
-                    transitionDuration: 1500,
-                    delay: 4000,
-                    animationDuration: 1500,
-                    animation: "random",
-                    slides: responsiveImage,
-                    timer: false,
-                });
-            }, 100);
-        });
-    </script>
 </Layout>

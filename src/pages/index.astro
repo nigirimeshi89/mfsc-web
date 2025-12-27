@@ -1,43 +1,49 @@
 ---
 // src/pages/index.astro
 import Layout from "../layouts/Layout.astro";
-
-// ▼▼▼ 変更点：共通化したファイルから読み込む（Step 3） ▼▼▼
 import { client } from "../lib/microcms";
 import type { MicroCMSListResponse } from "../lib/microcms";
 
+// ▼ ニュースの型定義
 type News = {
 	id: string;
 	title: string;
 	date: string;
 	url?: string;
+	top_image?: { url: string };
 };
 
-// ▼▼▼ 削除：ここで createClient する記述は不要になりました ▼▼▼
-// const client = createClient({ ... });
-
+// ▼ 1. ニュース一覧用（テキスト表示用）
+// ★修正：「日付(date)」が入っている記事だけを取得（Invalid Date対策）
 const response = await client.get<MicroCMSListResponse<News>>({
 	endpoint: "news",
-	queries: { fields: ["id", "title", "date", "url"] },
+	queries: {
+		fields: ["id", "title", "date", "url"],
+		filters: "date[exists]", // ★ここが重要！
+		limit: 5,
+	},
 });
+
+// ▼ 2. スライドショー用画像の取得
+// 「トップ用画像(top_image)」がある記事だけを抽出してスライドショー化
+const sliderResponse = await client.get<MicroCMSListResponse<News>>({
+	endpoint: "news",
+	queries: {
+		fields: ["top_image"],
+		filters: "top_image[exists]",
+		limit: 10,
+	},
+});
+
+// ▼ Vegas.js形式に変換
+const vegasImages = sliderResponse.contents.map((content) => ({
+	// @ts-ignore
+	src: content.top_image.url,
+}));
 ---
 
 <Layout title="MAIN">
 	<div id="header-placeholder"></div>
-
-	<div id="search-wrap">
-		<div class="close-btn"><span></span><span></span></div>
-		<div class="search-area">
-			<form id="login_form">
-				<input
-					type="password"
-					id="pass"
-					placeholder="Enter Secret Code..."
-					autocomplete="off"
-				/>
-			</form>
-		</div>
-	</div>
 
 	<section id="vidual-area">
 		<div id="slider-area" class="bgextend bgRLextendTrigger">
@@ -177,56 +183,53 @@ const response = await client.get<MicroCMSListResponse<News>>({
 		<section id="contact"></section>
 	</main>
 
-	<script>
-		document.addEventListener("DOMContentLoaded", () => {
-			const form = document.getElementById("login_form");
-			const passInput = document.getElementById("pass"); // type="password"
-
-			if (form && passInput) {
-				// エンターキーでの送信を防ぐ
-				form.addEventListener("submit", (e) => {
-					e.preventDefault();
-					checkPassword();
-				});
-
-				// パスワードチェック関数
-				function checkPassword() {
-					// @ts-ignore
-					const val = passInput.value;
-					if (val === "888000") {
-						// 一致したら limited ページへ
-						window.location.href = "/limited";
-					}
-				}
-
-				// キー入力検知
-				passInput.addEventListener("keyup", function (event) {
-					if (event.key === "Enter") {
-						checkPassword();
-					}
-				});
+	<script is:inline define:vars={{ vegasImages }}>
+		// jQuery ($) を使わず、純粋なJSでロード完了を待ちます
+		window.addEventListener("load", function () {
+			// ロード完了後、jQueryが使えるかチェック
+			if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+				console.error("Vegas or jQuery not loaded");
+				return;
 			}
+
+			// デフォルト画像
+			const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+
+			// microCMSの画像があればそれを使い、なければデフォルトを使う
+			const finalImages =
+				vegasImages.length > 0 ? vegasImages : defaultImages;
+
+			// ★ここにあった destroy は削除しました★
+
+			// Vegasを開始
+			$("#slider").vegas({
+				overlay: false,
+				transition: "blur",
+				transitionDuration: 2000,
+				delay: 10000,
+				animationDuration: 20000,
+				animation: "kenburns",
+				slides: finalImages,
+			});
 		});
 	</script>
 
 	<style>
-		/* ニュースリストのスタイル（左揃え・縦積み完全修正版） */
+		/* ニュースリストのスタイル */
 		#news-list {
 			padding: 0;
 			list-style: none;
-			text-align: left !important; /* 強制的に左揃え */
+			text-align: left !important;
 		}
 
 		#news-list li {
 			padding: 15px 0;
 			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-			/* ▼ 縦並び＆左寄せの設定 ▼ */
 			display: flex;
-			flex-direction: column; /* 縦積みにする */
-			align-items: flex-start; /* 【重要】中身を左端に寄せる */
+			flex-direction: column;
+			align-items: flex-start;
 			justify-content: flex-start;
-			gap: 5px; /* 日付とタイトルの隙間 */
+			gap: 5px;
 		}
 
 		#news-list time {
@@ -234,7 +237,7 @@ const response = await client.get<MicroCMSListResponse<News>>({
 			color: #aaa;
 			font-family: "Oswald", sans-serif;
 			letter-spacing: 0.05em;
-			margin: 0; /* 変な余白を消す */
+			margin: 0;
 			line-height: 1;
 		}
 
@@ -242,12 +245,12 @@ const response = await client.get<MicroCMSListResponse<News>>({
 		#news-list span {
 			font-size: 1rem;
 			line-height: 1.5;
-			display: block; /* ブロック要素にして横幅を確保 */
+			display: block;
 			text-decoration: none;
-			text-align: left; /* 文字自体も左揃え */
-			margin: 0; /* 変な余白を消す */
-			padding: 0; /* 変な余白を消す */
-			width: 100%; /* 横幅いっぱいに広げる */
+			text-align: left;
+			margin: 0;
+			padding: 0;
+			width: 100%;
 		}
 
 		#news-list a:hover {

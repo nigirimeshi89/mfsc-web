@@ -1,55 +1,50 @@
 ---
-// src/pages/limited/gallery/[galleryId].astro
+// src/pages/gallery/[galleryId].astro
 import Layout from "../../../layouts/Layout.astro";
 import { createClient } from "microcms-js-sdk";
 
-// ▼ API設定
-const client = createClient({
-    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-    apiKey: import.meta.env.MICROCMS_API_KEY,
-});
+// ▼ 1. 画像の定義
+type GalleryImage = {
+    url: string;
+    height: number;
+    width: number;
+};
 
-// ▼ getStaticPaths
+// ▼ 2. ギャラリーデータの定義
+type Gallery = {
+    id: string;
+    title: string;
+    date: string;
+    images: GalleryImage[];
+};
+
+interface Props {
+    gallery: Gallery;
+}
+
 export async function getStaticPaths() {
     const client = createClient({
         serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
         apiKey: import.meta.env.MICROCMS_API_KEY,
     });
-
-    // limit は 100 まで
     const response = await client.get({
         endpoint: "galleries",
         queries: { limit: 100 },
     });
-
     return response.contents.map((content: any) => ({
         params: { galleryId: content.id },
         props: { gallery: content },
     }));
 }
 
-// 型定義
-interface Props {
-    gallery: {
-        id: string;
-        title: string;
-        date: string;
-        isLimited?: boolean;
-        images?: { url: string }[];
-        content?: string;
-    };
-}
-
 const { gallery } = Astro.props;
 
-// 日付フォーマット
-const formatDate = (dateString: string) => {
-    const d = new Date(dateString);
-    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
-};
+// 日付のフォーマット
+const d = new Date(gallery.date);
+const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
 ---
 
-<Layout title={`${gallery.title} | MFSC Limited`} isLimited={true}>
+<Layout title={gallery.title}>
     <div id="header-placeholder"></div>
 
     <section id="vidual-area">
@@ -59,8 +54,8 @@ const formatDate = (dateString: string) => {
             </div>
         </div>
         <h2>
-            <span class="js_typing">Limited</span><br /><span class="js_typing"
-                >Gallery Detail</span
+            <span class="js_typing">{formattedDate}</span><br /><span
+                class="js_typing">GALLERY</span
             >
         </h2>
         <div class="scrolldown1"><span>Scroll</span></div>
@@ -68,101 +63,111 @@ const formatDate = (dateString: string) => {
 
     <main id="main-area">
         <section id="service1">
-            <div class="detail-header">
-                <h2 class="js_typing">{gallery.title}</h2>
-                <p class="date">{formatDate(gallery.date)}</p>
-                {gallery.isLimited && <span class="secret-tag">🔒 SECRET</span>}
-            </div>
+            <h2 class="js_typing">{gallery.title}</h2>
 
-            <div class="gallery-images">
+            <div class="gallery-container">
+                {/* 画像がある場合のみ表示 */}
                 {
-                    gallery.images &&
-                        gallery.images.map((img: any) => (
-                            <div class="img-box">
-                                <a
-                                    href={img.url}
-                                    data-lightbox="gallery-detail"
-                                    data-title={gallery.title}
-                                >
-                                    <img src={img.url} alt={gallery.title} />
-                                </a>
-                            </div>
-                        ))
+                    gallery.images && gallery.images.length > 0 ? (
+                        <ul class="gallery-grid">
+                            {gallery.images.map((item) => (
+                                <li>
+                                    <a
+                                        href={item.url}
+                                        data-lightbox="gallery"
+                                        data-title={gallery.title}
+                                    >
+                                        <img
+                                            src={item.url}
+                                            alt="Gallery Image"
+                                            loading="lazy"
+                                        />
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p style="text-align:center; color:#fff;">
+                            写真がまだありません。
+                        </p>
+                    )
                 }
             </div>
 
-            {
-                gallery.content && (
-                    <div class="gallery-content">
-                        <p>{gallery.content}</p>
-                    </div>
-                )
-            }
-
             <div class="back-btn-area">
-                <a href="/limited/gallery" class="btn04 bordercircle">
-                    <span>Back to List</span>
-                </a>
+                <a href="/gallery" class="btn04 bordercircle"
+                    ><span>一覧に戻る</span></a
+                >
             </div>
         </section>
     </main>
 
+    <script is:inline>
+        window.addEventListener("load", function () {
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined")
+                return;
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: [{ src: "/img/jpg/bg_main_01.jpg" }], // ※表示したい画像のパスを確認してください
+            });
+        });
+    </script>
     <style>
-        .detail-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .date {
-            color: #888;
-            margin-bottom: 10px;
-        }
-        .secret-tag {
-            background: #b22222;
-            color: #fff;
-            padding: 2px 8px;
-            font-size: 0.8rem;
-            border-radius: 4px;
+        /* === ギャラリーグリッドのデザイン === */
+        .gallery-container {
+            max-width: 1000px;
+            margin: 0 auto 50px auto;
+            padding: 0 20px;
         }
 
-        .gallery-images {
+        .gallery-grid {
             display: flex;
             flex-wrap: wrap;
+            gap: 10px; /* 画像同士の隙間 */
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 40px;
+            list-style: none;
+            padding: 0;
         }
 
-        /* ▼▼▼ ここが修正ポイント！ ▼▼▼ */
-        .img-box {
-            width: 30%;
-            aspect-ratio: 1/1; /* 正方形を維持 */
+        .gallery-grid li {
+            width: calc(33.333% - 10px);
+            /* 3列表示 */
+            aspect-ratio: 1 / 1;
+            /* 正方形にトリミング */
             overflow: hidden;
-            border-radius: 0; /* ★ここを0にして真四角にする */
-            /* もし少しだけ角を丸くしたい場合は border-radius: 8px; などに変更してください */
+            position: relative;
         }
-        .img-box img {
+
+        .gallery-grid li a {
+            display: block;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
-            border-radius: 0; /* ★念のためここにも指定 */
-        }
-        /* ▲▲▲ 修正ポイントここまで ▲▲▲ */
-
-        .img-box:hover img {
-            transform: scale(1.1);
+            transition: opacity 0.3s;
         }
 
-        .gallery-content {
-            max-width: 800px;
-            margin: 0 auto 40px;
-            line-height: 1.8;
+        .gallery-grid li a:hover {
+            opacity: 0.7;
         }
 
+        .gallery-grid img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 枠いっぱいに広げる */
+            display: block;
+        }
+
+        /* 戻るボタン周り */
         .back-btn-area {
             text-align: center;
             margin: 60px 0;
         }
+
+        /* ボタンデザイン */
         .btn04 {
             display: inline-block;
             color: #fff;
@@ -177,9 +182,11 @@ const formatDate = (dateString: string) => {
             color: #333;
         }
 
+        /* === スマホ対応 === */
         @media (max-width: 768px) {
-            .img-box {
-                width: 45%;
+            .gallery-grid li {
+                width: calc(50% - 10px);
+                /* スマホは2列 */
             }
         }
     </style>
