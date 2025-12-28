@@ -93,7 +93,7 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                 </ul>
             </div>
 
-            <ul id="gallery" class="grid delayScroll">
+            <ul id="member-list-wrap" class="member-grid delayScroll">
                 {
                     response.contents.map((member) => {
                         // 学年処理
@@ -123,9 +123,8 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                         const filterClasses =
                             `grade-${schoolYear} ` +
                             normalizedParts.map((p) => `part-${p}`).join(" ");
-
                         return (
-                            <li class={`item ${filterClasses}`}>
+                            <li class={`member-item ${filterClasses}`}>
                                 <div class="item-content">
                                     <a
                                         data-fancybox
@@ -191,15 +190,6 @@ const response = await client.get<MicroCMSListResponse<Member>>({
         </section>
     </main>
 
-    <script
-        is:inline
-        src="https://cdn.jsdelivr.net/npm/web-animations-js@2.3.2/web-animations.min.js"
-    ></script>
-    <script
-        is:inline
-        src="https://cdn.jsdelivr.net/npm/muuri@0.8.0/dist/muuri.min.js"
-    ></script>
-
     <script is:inline>
         document.addEventListener("DOMContentLoaded", () => {
             // Fancyboxの初期化
@@ -211,14 +201,10 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                 });
             }
 
-            // ▼ フィルタリングロジックについて
-            // Muuriライブラリを読み込んだため、もしmain.js側で自動的にフィルタリングが動く場合は、
-            // 以下の手動フィルタリングコードは不要（削除してもよい）になります。
-            // ひとまず競合を避けるため、手動コードも残していますが、
-            // 動きがおかしい場合はこの下から「ここまで」の間を削除してください。
-
+            // ▼ 手動フィルタリングロジック
             const buttons = document.querySelectorAll(".filter-btn");
-            const items = document.querySelectorAll(".item");
+            // クラス名変更に伴いセレクタも変更
+            const items = document.querySelectorAll(".member-item");
 
             buttons.forEach((btn) => {
                 btn.addEventListener("click", () => {
@@ -239,27 +225,21 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                     });
                 });
             });
-            // ▲ 手動フィルタリングここまで ▲
         });
     </script>
 
     <script is:inline define:vars={{ vegasImages }}>
-        // jQuery ($) を使わず、純粋なJSでロード完了を待ちます
         window.addEventListener("load", function () {
-            // ロード完了後、jQueryが使えるかチェック
+            // jQueryとVegasが読み込まれているかチェック
             if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
                 console.error("Vegas or jQuery not loaded");
                 return;
             }
 
-            // デフォルト画像（取得できなかった場合のフォールバック）
             const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
-
-            // microCMSの画像があればそれを使い、なければデフォルトを使う
             const finalImages =
                 vegasImages.length > 0 ? vegasImages : defaultImages;
 
-            // Vegasを開始
             $("#slider").vegas({
                 overlay: false,
                 transition: "blur",
@@ -273,21 +253,19 @@ const response = await client.get<MicroCMSListResponse<Member>>({
     </script>
 
     <style>
-        /* ▼▼▼ 追加修正：ヘッダーのクリックを確実にするための設定 ▼▼▼ */
+        /* ヘッダー周りの修正 */
         #header-placeholder {
             pointer-events: none !important;
             position: relative;
             z-index: -1;
         }
-
         :global(#header),
         :global(header),
         :global(.header) {
-            z-index: 2147483647 !important; /* 最前面に固定 */
+            z-index: 2147483647 !important;
             position: fixed !important;
             pointer-events: auto !important;
         }
-
         :global(#header a),
         :global(header a),
         :global(.header a),
@@ -295,25 +273,21 @@ const response = await client.get<MicroCMSListResponse<Member>>({
         :global(.search-btn) {
             pointer-events: auto !important;
             z-index: 2147483647 !important;
-            cursor: pointer !important; /* カーソルも指マークに強制 */
+            cursor: pointer !important;
         }
-
         #vidual-area {
             position: relative;
             z-index: 1 !important;
-            pointer-events: none; /* 下の要素（ヘッダー含む）を通す */
+            pointer-events: none;
         }
-
         #slider-area {
             pointer-events: none;
             z-index: 0;
         }
-
         #vidual-area .scrolldown1 {
-            pointer-events: auto; /* スクロールボタンは押せるように戻す */
+            pointer-events: auto;
             cursor: pointer;
         }
-        /* ▲▲▲ 追加修正ここまで ▲▲▲ */
 
         .sort-container {
             margin-bottom: 40px;
@@ -338,26 +312,19 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             padding: 8px 20px;
             cursor: pointer;
             color: #fff;
-            /* ダークモード時の文字色（白） */
             transition: all 0.3s;
         }
-
-        /* ▼▼▼ ライトモード：フィルタボタン ▼▼▼ */
         :global(body.light-mode) .filter-btn,
         :global(body.light) .filter-btn {
             color: #333;
-            /* 文字を黒に！ */
             border-color: #999;
         }
-
         .filter-btn:hover,
         .filter-btn.active {
             background: #b22222 !important;
             border-color: #b22222 !important;
             color: #fff !important;
         }
-
-        /* ▼▼▼ ライトモード：アクティブボタン（青） ▼▼▼ */
         :global(body.light-mode) .filter-btn:hover,
         :global(body.light-mode) .filter-btn.active,
         :global(body.light) .filter-btn:hover,
@@ -366,22 +333,24 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             border-color: #0066cc !important;
         }
 
-        .grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-            padding: 20px;
-            margin: 0 auto;
-            list-style: none;
-            max-width: 1200px;
-            position: relative;
+        /* ▼▼▼ 修正: 独自のクラス名 .member-grid でFlexboxを強制 ▼▼▼ */
+        .member-grid {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+            gap: 30px !important;
+            padding: 20px 0 !important;
+            margin: 0 auto !important;
+            list-style: none !important;
+            max-width: 1200px !important;
+            width: 100% !important;
         }
 
-        .item {
+        /* ▼▼▼ 修正: アイテムの幅を固定し、横並びにする ▼▼▼ */
+        .member-item {
             position: relative;
             display: block;
-            width: 180px;
+            width: 180px !important; /* 幅を強制 */
             margin-bottom: 20px;
             transition: opacity 0.3s ease;
         }
@@ -407,30 +376,28 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             object-fit: cover;
             vertical-align: bottom;
         }
-        .item:hover .img-box {
+        .member-item:hover .img-box {
             border-color: #b22222;
         }
-        /* ▼▼▼ ライトモード：画像のボーダー（青） ▼▼▼ */
-        :global(body.light-mode) .item:hover .img-box,
-        :global(body.light) .item:hover .img-box {
+        :global(body.light-mode) .member-item:hover .img-box,
+        :global(body.light) .member-item:hover .img-box {
             border-color: #0066cc;
         }
 
-        .item span {
+        .member-item span {
             display: block;
             margin-top: 10px;
             font-weight: bold;
-            color: #fff; /* ダークモード時の文字色（白） */
+            color: #fff;
             font-size: 0.95rem;
             transition: color 0.3s;
         }
-
-        /* ▼▼▼ ライトモード：名前の文字色（黒） ▼▼▼ */
-        :global(body.light-mode) .item span,
-        :global(body.light) .item span {
+        :global(body.light-mode) .member-item span,
+        :global(body.light) .member-item span {
             color: #333;
         }
 
+        /* モーダルスタイル */
         .member-popup {
             display: none;
             width: 90%;
@@ -476,12 +443,10 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             font-family: "Oswald", sans-serif;
             color: #333;
         }
-        /* ▼▼▼ ライトモード：ポップアップ名の線（青） ▼▼▼ */
         :global(body.light-mode) .popup-name,
         :global(body.light) .popup-name {
             border-bottom-color: #0066cc;
         }
-
         .popup-info {
             margin-bottom: 20px;
         }
@@ -500,29 +465,27 @@ const response = await client.get<MicroCMSListResponse<Member>>({
         .badge.part {
             background-color: #b22222;
         }
-        /* ▼▼▼ ライトモード：バッジの色（青） ▼▼▼ */
         :global(body.light-mode) .badge.part,
         :global(body.light) .badge.part {
             background-color: #0066cc;
         }
-
         .popup-comment {
             font-size: 1rem;
             line-height: 1.8;
             white-space: pre-wrap;
             word-wrap: break-word;
-            color: #333; /* 明示的に黒 */
+            color: #333;
         }
 
         @media only screen and (max-width: 768px) {
-            .grid {
-                gap: 15px;
+            .member-grid {
+                gap: 15px !important;
             }
-            .item {
-                width: 45%;
+            .member-item {
+                width: 45% !important;
                 max-width: 160px;
             }
-            .item span {
+            .member-item span {
                 font-size: 0.8rem;
             }
             .member-popup {
