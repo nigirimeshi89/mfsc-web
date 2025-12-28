@@ -2,24 +2,47 @@
 // src/pages/limited/members.astro
 import Layout from "../../layouts/Layout.astro";
 
-// ▼▼▼ 変更点：共通ファイルから読み込み（階層が深いので ../../ です！） ▼▼▼
+// ▼▼▼ 共通ファイルから読み込み ▼▼▼
 import { client } from "../../lib/microcms";
 import type { MicroCMSListResponse } from "../../lib/microcms";
 import { getSchoolYear, normalizePart } from "../../utils/memberHelper";
+
+// ▼ 限定用スライドショー画像の型定義
+type SliderNews = {
+    id: string;
+    top_image_isLimited?: { url: string };
+};
+
+// ▼ 限定用画像(top_image_isLimited)を取得
+const sliderResponse = await client.get<MicroCMSListResponse<SliderNews>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image_isLimited"],
+        filters: "top_image_isLimited[exists]",
+        limit: 10,
+    },
+});
+
+// ▼ Vegas.js形式に変換
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image_isLimited.url,
+}));
 
 // ▼ 部員の設計図
 type Member = {
     id: string;
     name: string;
-    image: { url: string };
+    image: { url: string }; // 通常画像
+    // ▼ 追加: 限定用プロフ画像
+    image_isLimited?: { url: string };
+
     grade: any;
     parts: string | string[];
     content?: string;
-
-    // 追加フィールド
     FullName?: string;
     nickname?: string;
-    private_content?: string; // ★限定ページだけの特別フィールド！
+    private_content?: string;
     SNS?: string;
 };
 
@@ -33,18 +56,17 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             "id",
             "name",
             "image",
+            "image_isLimited", // ▼ 取得フィールドに追加
             "grade",
             "parts",
             "content",
             "FullName",
             "nickname",
-            "private_content", // ★ここも忘れずに取得
+            "private_content",
             "SNS",
         ],
     },
 });
-
-// ※ getSchoolYear, normalizePart 関数は import したので削除！
 ---
 
 <Layout title="LIMITED_MEMBER" isLimited={true}>
@@ -93,6 +115,7 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             <ul id="gallery" class="grid delayScroll">
                 {
                     response.contents.map((member) => {
+                        // 学年・パート処理
                         let rawGrade = Array.isArray(member.grade)
                             ? member.grade[0]
                             : member.grade;
@@ -100,7 +123,6 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                             String(rawGrade).replace(/[^0-9]/g, ""),
                             10,
                         );
-                        // utilsから使用
                         const schoolYear = getSchoolYear(gradeNum);
 
                         let rawPartsArray: string[] = [];
@@ -110,16 +132,14 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                             rawPartsArray = [member.parts as string];
                         }
                         const partsDisplay = rawPartsArray.join(" / ");
-
-                        // utilsから使用
                         const normalizedParts = rawPartsArray.map((p) =>
                             normalizePart(p),
                         );
-
                         const filterClasses =
                             `grade-${schoolYear} ` +
                             normalizedParts.map((p) => `part-${p}`).join(" ");
 
+                        // 名前処理
                         const displayName = member.FullName
                             ? member.FullName
                             : member.name;
@@ -127,6 +147,12 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                             member.FullName && member.name !== member.FullName
                                 ? member.name
                                 : "";
+
+                        // ▼▼▼ 画像の決定ロジック ▼▼▼
+                        // 限定画像があればそれを使い、なければ通常画像を使う
+                        const displayImage = member.image_isLimited
+                            ? member.image_isLimited.url
+                            : member.image.url;
 
                         return (
                             <li class={`item ${filterClasses}`}>
@@ -138,8 +164,9 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                                         class="member-link"
                                     >
                                         <div class="img-box limited-border">
+                                            {/* ▼ 決定した画像を表示 */}
                                             <img
-                                                src={member.image.url}
+                                                src={displayImage}
                                                 alt={displayName}
                                             />
                                         </div>
@@ -163,8 +190,9 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                                     >
                                         <div class="popup-inner">
                                             <div class="popup-img-area">
+                                                {/* ▼ モーダル内も決定した画像を表示 */}
                                                 <img
-                                                    src={member.image.url}
+                                                    src={displayImage}
                                                     alt={displayName}
                                                 />
                                             </div>
@@ -215,7 +243,7 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                                                             : "紹介文なし"}
                                                     </div>
 
-                                                    {/* ▼▼▼ ここが限定ページの見せ場！ ▼▼▼ */}
+                                                    {/* 限定ページの見せ場 */}
                                                     {member.private_content && (
                                                         <div class="private-comment">
                                                             <p class="section-label secret">
@@ -229,7 +257,6 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                                                             </div>
                                                         </div>
                                                     )}
-                                                    {/* ▲▲▲ 見せ場ここまで ▲▲▲ */}
                                                 </div>
                                             </div>
                                         </div>
@@ -278,6 +305,34 @@ const response = await client.get<MicroCMSListResponse<Member>>({
         });
     </script>
 
+    <script is:inline define:vars={{ vegasImages }}>
+        window.addEventListener("load", function () {
+            // jQueryとVegasが読み込まれているかチェック
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
+                return;
+            }
+
+            // 限定用画像が1枚もなかった場合のデフォルト画像
+            const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+
+            // 画像があればそれを使い、なければデフォルトを使う
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
+            // Vegasを開始
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: finalImages,
+            });
+        });
+    </script>
+
     <style>
         /* 一般ページとほぼ同じですが、ライトモード対応を含めています */
         .sort-container {
@@ -302,7 +357,8 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             border-radius: 30px;
             padding: 8px 20px;
             cursor: pointer;
-            color: #fff; /* デフォルト白（ダークモード） */
+            color: #fff;
+            /* デフォルト白（ダークモード） */
             transition: all 0.3s;
         }
 

@@ -1,16 +1,36 @@
 ---
-// src/pages/gallery/[galleryId].astro
+// src/pages/limited/gallery/[galleryId].astro
 import Layout from "../../../layouts/Layout.astro";
-import { createClient } from "microcms-js-sdk";
+import { client } from "../../../lib/microcms";
+import type { MicroCMSListResponse } from "../../../lib/microcms";
 
-// ▼ 1. 画像の定義
+// ▼ 1. 限定用スライドショー画像の取得
+type SliderNews = {
+    id: string;
+    top_image_isLimited?: { url: string };
+};
+
+const sliderResponse = await client.get<MicroCMSListResponse<SliderNews>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image_isLimited"],
+        filters: "top_image_isLimited[exists]",
+        limit: 10,
+    },
+});
+
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image_isLimited.url,
+}));
+
+// ▼ 2. ギャラリーデータの定義
 type GalleryImage = {
     url: string;
     height: number;
     width: number;
 };
 
-// ▼ 2. ギャラリーデータの定義
 type Gallery = {
     id: string;
     title: string;
@@ -18,23 +38,22 @@ type Gallery = {
     images: GalleryImage[];
 };
 
-interface Props {
-    gallery: Gallery;
-}
-
+// ▼ 3. 詳細ページ生成
 export async function getStaticPaths() {
-    const client = createClient({
-        serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-        apiKey: import.meta.env.MICROCMS_API_KEY,
-    });
-    const response = await client.get({
+    // 共通のclientを使って取得
+    const response = await client.get<MicroCMSListResponse<Gallery>>({
         endpoint: "galleries",
         queries: { limit: 100 },
     });
-    return response.contents.map((content: any) => ({
+
+    return response.contents.map((content) => ({
         params: { galleryId: content.id },
         props: { gallery: content },
     }));
+}
+
+interface Props {
+    gallery: Gallery;
 }
 
 const { gallery } = Astro.props;
@@ -44,7 +63,7 @@ const d = new Date(gallery.date);
 const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
 ---
 
-<Layout title={gallery.title}>
+<Layout title={gallery.title} isLimited={true}>
     <div id="header-placeholder"></div>
 
     <section id="vidual-area">
@@ -58,6 +77,36 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
                 class="js_typing">GALLERY</span
             >
         </h2>
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar">
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path>
+                            </svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja">
+                            <img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            />
+                        </a>
+                    </li>
+                </ul>
+            </dd>
+        </dl>
         <div class="scrolldown1"><span>Scroll</span></div>
     </section>
 
@@ -95,17 +144,26 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
             </div>
 
             <div class="back-btn-area">
-                <a href="/gallery" class="btn04 bordercircle"
+                <a href="/limited/gallery" class="btn04 bordercircle"
                     ><span>一覧に戻る</span></a
                 >
             </div>
         </section>
     </main>
 
-    <script is:inline>
+    <script is:inline define:vars={{ vegasImages }}>
         window.addEventListener("load", function () {
-            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined")
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
                 return;
+            }
+
+            // 限定用画像が1枚もなかった場合のデフォルト画像
+            const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
             $("#slider").vegas({
                 overlay: false,
                 transition: "blur",
@@ -113,10 +171,11 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
                 delay: 10000,
                 animationDuration: 20000,
                 animation: "kenburns",
-                slides: [{ src: "/img/jpg/bg_main_01.jpg" }], // ※表示したい画像のパスを確認してください
+                slides: finalImages,
             });
         });
     </script>
+
     <style>
         /* === ギャラリーグリッドのデザイン === */
         .gallery-container {
@@ -181,6 +240,19 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
             background: #fff;
             color: #333;
         }
+
+        /* ▼▼▼ 追加：ライトモード時のボタン色修正 ▼▼▼ */
+        :global(body.light-mode) .btn04,
+        :global(body.light) .btn04 {
+            color: #333;
+            border-color: #333;
+        }
+        :global(body.light-mode) .btn04:hover,
+        :global(body.light) .btn04:hover {
+            background: #333;
+            color: #fff;
+        }
+        /* ▲▲▲ 追加ここまで ▲▲▲ */
 
         /* === スマホ対応 === */
         @media (max-width: 768px) {

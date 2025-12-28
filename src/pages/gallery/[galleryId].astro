@@ -1,49 +1,63 @@
 ---
-// src/pages/gallery/[id].astro
+// src/pages/gallery/[galleryId].astro
 import Layout from "../../layouts/Layout.astro";
-import { createClient } from "microcms-js-sdk";
+// ▼ 修正: 共通のclientを使うように変更
+import { client } from "../../lib/microcms";
+import type { MicroCMSListResponse } from "../../lib/microcms";
 
-// ▼ 1. 画像の定義を変更（「複数画像」タイプに合わせてシンプルに！）
+// ▼ 1. スライドショー用画像の取得（一般公開用）
+type News = {
+    id: string;
+    title: string;
+    date: string;
+    url?: string;
+    top_image?: { url: string };
+};
+
+const sliderResponse = await client.get<MicroCMSListResponse<News>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image"],
+        filters: "top_image[exists]",
+        limit: 10,
+    },
+});
+
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image.url,
+}));
+
+// ▼ 2. ギャラリーデータの定義
 type GalleryImage = {
     url: string;
     height: number;
     width: number;
 };
 
-// ▼ 2. ギャラリーデータの定義
 type Gallery = {
     id: string;
     title: string;
     date: string;
-    images: GalleryImage[]; // 画像のリスト
+    images: GalleryImage[];
 };
 
-// ▼ 3. 型定義
-interface Props {
-    gallery: Gallery;
-}
-
-// ▼ MicroCMS接続設定
-const client = createClient({
-    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-    apiKey: import.meta.env.MICROCMS_API_KEY,
-});
-
+// ▼ 3. 詳細ページ生成
 export async function getStaticPaths() {
-    const client = createClient({
-        serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-        apiKey: import.meta.env.MICROCMS_API_KEY,
-    });
-
-    const response = await client.get({
+    const response = await client.get<MicroCMSListResponse<Gallery>>({
         endpoint: "galleries",
         queries: { limit: 100 },
     });
 
-    return response.contents.map((content: any) => ({
+    return response.contents.map((content) => ({
+        // ファイル名が [galleryId].astro なら galleryId、[id].astro なら id に合わせる
         params: { galleryId: content.id },
         props: { gallery: content },
     }));
+}
+
+interface Props {
+    gallery: Gallery;
 }
 
 const { gallery } = Astro.props;
@@ -67,6 +81,36 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
                 class="js_typing">GALLERY</span
             >
         </h2>
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar">
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path>
+                            </svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja">
+                            <img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            />
+                        </a>
+                    </li>
+                </ul>
+            </dd>
+        </dl>
         <div class="scrolldown1"><span>Scroll</span></div>
     </section>
 
@@ -75,7 +119,6 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
             <h2 class="js_typing">{gallery.title}</h2>
 
             <div class="gallery-container">
-                {/* 画像がある場合のみ表示 */}
                 {
                     gallery.images && gallery.images.length > 0 ? (
                         <ul class="gallery-grid">
@@ -86,7 +129,6 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
                                         data-lightbox="gallery"
                                         data-title={gallery.title}
                                     >
-                                        {/* ★変更点：ここも item.url です */}
                                         <img
                                             src={item.url}
                                             alt="Gallery Image"
@@ -112,8 +154,31 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
         </section>
     </main>
 
+    <script is:inline define:vars={{ vegasImages }}>
+        window.addEventListener("load", function () {
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
+                return;
+            }
+
+            // 一般用のデフォルト画像
+            const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: finalImages,
+            });
+        });
+    </script>
+
     <style>
-        /* === ギャラリーグリッドのデザイン === */
         .gallery-container {
             max-width: 1000px;
             margin: 0 auto 50px auto;
@@ -123,15 +188,15 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
         .gallery-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px; /* 画像同士の隙間 */
+            gap: 10px;
             justify-content: center;
             list-style: none;
             padding: 0;
         }
 
         .gallery-grid li {
-            width: calc(33.333% - 10px); /* 3列表示 */
-            aspect-ratio: 1 / 1; /* 正方形にトリミング */
+            width: calc(33.333% - 10px);
+            aspect-ratio: 1 / 1;
             overflow: hidden;
             position: relative;
         }
@@ -150,17 +215,15 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
         .gallery-grid img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 枠いっぱいに広げる */
+            object-fit: cover;
             display: block;
         }
 
-        /* 戻るボタン周り */
         .back-btn-area {
             text-align: center;
             margin: 60px 0;
         }
 
-        /* ボタンデザイン */
         .btn04 {
             display: inline-block;
             color: #fff;
@@ -175,10 +238,22 @@ const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
             color: #333;
         }
 
-        /* === スマホ対応 === */
+        /* ▼▼▼ 追加：ライトモード時のボタン色修正 ▼▼▼ */
+        :global(body.light-mode) .btn04,
+        :global(body.light) .btn04 {
+            color: #333;
+            border-color: #333;
+        }
+        :global(body.light-mode) .btn04:hover,
+        :global(body.light) .btn04:hover {
+            background: #333;
+            color: #fff;
+        }
+        /* ▲▲▲ 追加ここまで ▲▲▲ */
+
         @media (max-width: 768px) {
             .gallery-grid li {
-                width: calc(50% - 10px); /* スマホは2列 */
+                width: calc(50% - 10px);
             }
         }
     </style>

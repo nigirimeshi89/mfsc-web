@@ -1,21 +1,35 @@
 ---
 // src/pages/limited/live/[liveId].astro
 import Layout from "../../../layouts/Layout.astro";
-import { createClient } from "microcms-js-sdk";
+// ▼ 修正: 共通のclientを使うように変更
+import { client } from "../../../lib/microcms";
+import type { MicroCMSListResponse } from "../../../lib/microcms";
 
-const client = createClient({
-    serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-    apiKey: import.meta.env.MICROCMS_API_KEY,
+// ▼ 1. 限定用スライドショー画像の取得
+type SliderNews = {
+    id: string;
+    top_image_isLimited?: { url: string };
+};
+
+const sliderResponse = await client.get<MicroCMSListResponse<SliderNews>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image_isLimited"],
+        filters: "top_image_isLimited[exists]",
+        limit: 10,
+    },
 });
 
-export async function getStaticPaths() {
-    const client = createClient({
-        serviceDomain: import.meta.env.MICROCMS_SERVICE_DOMAIN,
-        apiKey: import.meta.env.MICROCMS_API_KEY,
-    });
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image_isLimited.url,
+}));
 
+// ▼ 2. 詳細ページ生成（getStaticPaths）
+export async function getStaticPaths() {
+    // 共通clientを使用
     const response = await client.get({
-        endpoint: "live_info", // ★エンドポイント名
+        endpoint: "live_info",
         queries: { limit: 100 },
     });
 
@@ -57,6 +71,36 @@ const formatDate = (dateString: string) => {
                 >Live Report</span
             >
         </h2>
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar">
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path>
+                            </svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja">
+                            <img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            />
+                        </a>
+                    </li>
+                </ul>
+            </dd>
+        </dl>
         <div class="scrolldown1"><span>Scroll</span></div>
     </section>
 
@@ -98,6 +142,31 @@ const formatDate = (dateString: string) => {
         </section>
     </main>
 
+    <script is:inline define:vars={{ vegasImages }}>
+        window.addEventListener("load", function () {
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
+                return;
+            }
+
+            // 限定用画像が1枚もなかった場合のデフォルト画像
+            const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: finalImages,
+            });
+        });
+    </script>
+
     <style>
         .live-header {
             text-align: center;
@@ -107,7 +176,8 @@ const formatDate = (dateString: string) => {
             padding-bottom: 20px;
             display: inline-block;
             width: 100%;
-            transition: border-color 0.3s; /* 色の切り替えを滑らかに */
+            transition: border-color 0.3s;
+            /* 色の切り替えを滑らかに */
         }
 
         /* ▼▼▼ ライトモードなら青に上書き！ ▼▼▼ */
@@ -173,7 +243,8 @@ const formatDate = (dateString: string) => {
         /* 見出し（h2）の左線も色を変える設定 */
         .post-content :global(h2) {
             font-size: 1.5rem;
-            border-left: 5px solid #b22222; /* デフォルト赤 */
+            border-left: 5px solid #b22222;
+            /* デフォルト赤 */
             padding-left: 15px;
             margin: 40px 0 20px;
             transition: border-color 0.3s;
@@ -220,6 +291,19 @@ const formatDate = (dateString: string) => {
             background: #fff;
             color: #333;
         }
+
+        /* ▼▼▼ 追加：ライトモード時のボタン色修正 ▼▼▼ */
+        :global(body.light-mode) .btn04,
+        :global(body.light) .btn04 {
+            color: #333;
+            border-color: #333;
+        }
+        :global(body.light-mode) .btn04:hover,
+        :global(body.light) .btn04:hover {
+            background: #333;
+            color: #fff;
+        }
+        /* ▲▲▲ 追加ここまで ▲▲▲ */
 
         @media (max-width: 768px) {
             .live-title {

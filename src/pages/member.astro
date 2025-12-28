@@ -7,6 +7,31 @@ import { client } from "../lib/microcms";
 import type { MicroCMSListResponse } from "../lib/microcms";
 import { getSchoolYear, normalizePart } from "../utils/memberHelper";
 
+// ▼ 追加: ニュース画像の型定義（スライドショー用）
+type News = {
+    id: string;
+    title: string;
+    date: string;
+    url?: string;
+    top_image?: { url: string };
+};
+
+// ▼ 追加: スライドショー用画像の取得
+const sliderResponse = await client.get<MicroCMSListResponse<News>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image"],
+        filters: "top_image[exists]",
+        limit: 10,
+    },
+});
+
+// ▼ 追加: Vegas.js形式に変換
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image.url,
+}));
+
 // ▼ 部員の設計図
 type Member = {
     id: string;
@@ -166,8 +191,32 @@ const response = await client.get<MicroCMSListResponse<Member>>({
         </section>
     </main>
 
+    <script
+        is:inline
+        src="https://cdn.jsdelivr.net/npm/web-animations-js@2.3.2/web-animations.min.js"
+    ></script>
+    <script
+        is:inline
+        src="https://cdn.jsdelivr.net/npm/muuri@0.8.0/dist/muuri.min.js"
+    ></script>
+
     <script is:inline>
         document.addEventListener("DOMContentLoaded", () => {
+            // Fancyboxの初期化
+            if (typeof $ !== "undefined" && $("[data-fancybox]").length > 0) {
+                $("[data-fancybox]").fancybox({
+                    touch: false,
+                    autoFocus: false,
+                    animationEffect: "zoom-in-out",
+                });
+            }
+
+            // ▼ フィルタリングロジックについて
+            // Muuriライブラリを読み込んだため、もしmain.js側で自動的にフィルタリングが動く場合は、
+            // 以下の手動フィルタリングコードは不要（削除してもよい）になります。
+            // ひとまず競合を避けるため、手動コードも残していますが、
+            // 動きがおかしい場合はこの下から「ここまで」の間を削除してください。
+
             const buttons = document.querySelectorAll(".filter-btn");
             const items = document.querySelectorAll(".item");
 
@@ -190,18 +239,82 @@ const response = await client.get<MicroCMSListResponse<Member>>({
                     });
                 });
             });
+            // ▲ 手動フィルタリングここまで ▲
+        });
+    </script>
 
-            if (typeof $ !== "undefined" && $("[data-fancybox]").length > 0) {
-                $("[data-fancybox]").fancybox({
-                    touch: false,
-                    autoFocus: false,
-                    animationEffect: "zoom-in-out",
-                });
+    <script is:inline define:vars={{ vegasImages }}>
+        // jQuery ($) を使わず、純粋なJSでロード完了を待ちます
+        window.addEventListener("load", function () {
+            // ロード完了後、jQueryが使えるかチェック
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
+                return;
             }
+
+            // デフォルト画像（取得できなかった場合のフォールバック）
+            const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+
+            // microCMSの画像があればそれを使い、なければデフォルトを使う
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
+            // Vegasを開始
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: finalImages,
+            });
         });
     </script>
 
     <style>
+        /* ▼▼▼ 追加修正：ヘッダーのクリックを確実にするための設定 ▼▼▼ */
+        #header-placeholder {
+            pointer-events: none !important;
+            position: relative;
+            z-index: -1;
+        }
+
+        :global(#header),
+        :global(header),
+        :global(.header) {
+            z-index: 2147483647 !important; /* 最前面に固定 */
+            position: fixed !important;
+            pointer-events: auto !important;
+        }
+
+        :global(#header a),
+        :global(header a),
+        :global(.header a),
+        :global(#search-btn),
+        :global(.search-btn) {
+            pointer-events: auto !important;
+            z-index: 2147483647 !important;
+            cursor: pointer !important; /* カーソルも指マークに強制 */
+        }
+
+        #vidual-area {
+            position: relative;
+            z-index: 1 !important;
+            pointer-events: none; /* 下の要素（ヘッダー含む）を通す */
+        }
+
+        #slider-area {
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #vidual-area .scrolldown1 {
+            pointer-events: auto; /* スクロールボタンは押せるように戻す */
+            cursor: pointer;
+        }
+        /* ▲▲▲ 追加修正ここまで ▲▲▲ */
+
         .sort-container {
             margin-bottom: 40px;
             text-align: center;
@@ -224,14 +337,16 @@ const response = await client.get<MicroCMSListResponse<Member>>({
             border-radius: 30px;
             padding: 8px 20px;
             cursor: pointer;
-            color: #fff; /* ダークモード時の文字色（白） */
+            color: #fff;
+            /* ダークモード時の文字色（白） */
             transition: all 0.3s;
         }
 
         /* ▼▼▼ ライトモード：フィルタボタン ▼▼▼ */
         :global(body.light-mode) .filter-btn,
         :global(body.light) .filter-btn {
-            color: #333; /* 文字を黒に！ */
+            color: #333;
+            /* 文字を黒に！ */
             border-color: #999;
         }
 

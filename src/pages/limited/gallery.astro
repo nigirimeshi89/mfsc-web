@@ -4,6 +4,29 @@ import Layout from "../../layouts/Layout.astro";
 import { client } from "../../lib/microcms";
 import type { MicroCMSListResponse } from "../../lib/microcms";
 
+// ▼ 追加: 限定用スライドショー画像の型定義
+// (既存のNews型と名前が被らないように SliderNews としています)
+type SliderNews = {
+    id: string;
+    top_image_isLimited?: { url: string };
+};
+
+// ▼ 追加: 限定用画像(top_image_isLimited)を取得
+const sliderResponse = await client.get<MicroCMSListResponse<SliderNews>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image_isLimited"], // 限定用フィールドを指定
+        filters: "top_image_isLimited[exists]", // 画像がある記事だけ
+        limit: 10,
+    },
+});
+
+// ▼ 追加: Vegas.js形式に変換
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image_isLimited.url,
+}));
+
 type Gallery = {
     id: string;
     title: string;
@@ -59,6 +82,36 @@ const formatDate = (dateString: string) => {
                 >Gallery</span
             >
         </h2>
+        <dl>
+            <dt>Follow Us</dt>
+            <dd>
+                <ul>
+                    <li>
+                        <a href="https://x.com/momotenguitar">
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 1200 1227"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+                                    fill="white"></path>
+                            </svg>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.instagram.com/mfsc_modern/?hl=ja">
+                            <img
+                                src="/img/main/ico_insta.svg"
+                                alt="Instagram"
+                            />
+                        </a>
+                    </li>
+                </ul>
+            </dd>
+        </dl>
         <div class="scrolldown1"><span>Scroll</span></div>
     </section>
 
@@ -147,6 +200,37 @@ const formatDate = (dateString: string) => {
                 animationDuration: 20000,
                 animation: "kenburns",
                 slides: [{ src: "/img/jpg/bg_main_01.jpg" }],
+            });
+        });
+    </script>
+
+    <script is:inline define:vars={{ vegasImages }}>
+        window.addEventListener("load", function () {
+            // jQueryとVegasが読み込まれているかチェック
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
+                return;
+            }
+
+            // 限定用画像が1枚もなかった場合のデフォルト画像（お好きな画像パスに変えてください）
+            const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+
+            // 画像があればそれを使い、なければデフォルトを使う
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
+            // 既存のVegasがあれば一旦破棄（念のため）
+            $("#slider").vegas("destroy");
+
+            // Vegasを開始
+            $("#slider").vegas({
+                overlay: false, // 網掛けオーバーレイ（必要なら true などのパスを指定）
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: finalImages,
             });
         });
     </script>

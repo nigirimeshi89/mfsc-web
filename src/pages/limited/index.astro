@@ -10,27 +10,27 @@ type News = {
     title: string;
     date: string;
     url?: string;
-    top_image?: { url: string };
+    // ▼ 限定用画像フィールド（microCMSで「画像」として作成している前提）
+    top_image_isLimited?: { url: string };
 };
 
 // ▼ 1. ニュース一覧用（テキスト表示用）
-// ★修正：「日付(date)」が入っている記事だけを取得（Invalid Date対策）
 const response = await client.get<MicroCMSListResponse<News>>({
     endpoint: "news",
     queries: {
         fields: ["id", "title", "date", "url"],
-        filters: "date[exists]", // ★ここが重要！
+        filters: "date[exists]",
         limit: 5,
     },
 });
 
 // ▼ 2. スライドショー用画像の取得
-// 「トップ用画像(top_image)」がある記事だけを抽出してスライドショー化
+// 限定用画像(top_image_isLimited)がある記事だけを取得します
 const sliderResponse = await client.get<MicroCMSListResponse<News>>({
     endpoint: "news",
     queries: {
-        fields: ["top_image"],
-        filters: "top_image[exists]",
+        fields: ["top_image_isLimited"],
+        filters: "top_image_isLimited[exists]",
         limit: 10,
     },
 });
@@ -38,7 +38,7 @@ const sliderResponse = await client.get<MicroCMSListResponse<News>>({
 // ▼ Vegas.js形式に変換
 const vegasImages = sliderResponse.contents.map((content) => ({
     // @ts-ignore
-    src: content.top_image.url,
+    src: content.top_image_isLimited.url,
 }));
 ---
 
@@ -139,7 +139,7 @@ const vegasImages = sliderResponse.contents.map((content) => ({
                             <img src="/img/main/top3.jpg" alt="Live Icon" />
                         </div>
                         <div class="card-content">
-                            <h3>LIVE ARCHIVE</h3><p>ライブ情報</p>
+                            <h3>LIVE INFORMATION</h3><p>ライブ情報</p>
                         </div>
                         <div class="card-arrow">→</div>
                     </div>
@@ -161,83 +161,87 @@ const vegasImages = sliderResponse.contents.map((content) => ({
             </div>
         </section>
 
-        <section id="news">
-            <h2 class="js_typing">News</h2>
-            <div class="tab-area bgextend bgLRextendTrigger">
-                <div class="bgappearTrigger">
-                    <ul class="tab">
-                        <li class="active"><a href="#topics">Topics</a></li>
-                    </ul>
-                    <div class="tab-choice-area">
-                        <div id="topics" class="area is-active">
-                            <ul id="news-list">
-                                {
-                                    response.contents.map((news) => (
-                                        <li>
-                                            <time datetime={news.date}>
-                                                {new Date(news.date)
-                                                    .toLocaleDateString(
-                                                        "ja-JP",
-                                                        {
-                                                            year: "numeric",
-                                                            month: "2-digit",
-                                                            day: "2-digit",
-                                                        },
-                                                    )
-                                                    .replace(/\//g, ".")}
-                                            </time>
-                                            {news.url ? (
-                                                <a
-                                                    href={news.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    {news.title}
-                                                </a>
-                                            ) : (
-                                                <span>{news.title}</span>
-                                            )}
-                                        </li>
-                                    ))
-                                }
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
         <section id="contact"></section>
     </main>
 
     <script is:inline define:vars={{ vegasImages }}>
-        // jQuery読み込み後に実行
-        $(window).on("load", function () {
-            // デフォルト画像（パスを絶対パス風に修正）
+        window.addEventListener("load", function () {
+            // ライブラリの読み込みチェック
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
+                return;
+            }
+
+            // 画像が取得できなかった場合のデフォルト画像（※パスは環境に合わせて変更してください）
             const defaultImages = [
                 { src: "/img/main/top8.jpg" },
                 { src: "/img/main/top9.jpg" },
                 { src: "/img/main/top10.jpg" },
             ];
+
+            // microCMSの画像があればそれを使い、なければデフォルトを使う
             const finalImages =
                 vegasImages.length > 0 ? vegasImages : defaultImages;
 
-            setTimeout(function () {
-                $("#slider").vegas("destroy");
-                $("#slider").vegas({
-                    overlay: false,
-                    transition: "fade2",
-                    transitionDuration: 1500,
-                    delay: 4000,
-                    animationDuration: 1500,
-                    animation: "kenburns",
-                    slides: finalImages,
-                    timer: false,
-                });
-            }, 100);
+            // ★修正ポイント: destroyは削除しました（初回ロード時のエラー原因になるため）
+
+            // Vegasを開始
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: finalImages,
+                timer: false,
+            });
         });
     </script>
 
     <style>
+        /* ▼▼▼ 追加修正：ヘッダーのクリックを確実にするための設定 ▼▼▼ */
+        #header-placeholder {
+            pointer-events: none !important;
+            position: relative;
+            z-index: -1;
+        }
+
+        :global(#header),
+        :global(header),
+        :global(.header) {
+            z-index: 2147483647 !important; /* 最前面に固定 */
+            position: fixed !important;
+            pointer-events: auto !important;
+        }
+
+        :global(#header a),
+        :global(header a),
+        :global(.header a),
+        :global(#search-btn),
+        :global(.search-btn) {
+            pointer-events: auto !important;
+            z-index: 2147483647 !important;
+            cursor: pointer !important;
+        }
+
+        #vidual-area {
+            position: relative;
+            z-index: 1 !important;
+            pointer-events: none; /* 下の要素を通す */
+        }
+
+        #slider-area {
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #vidual-area .scrolldown1 {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        /* ▲▲▲ 追加修正ここまで ▲▲▲ */
+
         .limited-menu-container {
             display: grid;
             grid-template-columns: 1fr 1fr;

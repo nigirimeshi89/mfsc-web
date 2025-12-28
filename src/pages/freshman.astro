@@ -1,6 +1,33 @@
 ---
 // src/pages/freshman.astro
 import Layout from "../layouts/Layout.astro";
+import { client } from "../lib/microcms";
+import type { MicroCMSListResponse } from "../lib/microcms";
+
+// ▼ 追加: ニュース画像の型定義
+type News = {
+    id: string;
+    title: string;
+    date: string;
+    url?: string;
+    top_image?: { url: string };
+};
+
+// ▼ 追加: スライドショー用画像の取得
+const sliderResponse = await client.get<MicroCMSListResponse<News>>({
+    endpoint: "news",
+    queries: {
+        fields: ["top_image"],
+        filters: "top_image[exists]",
+        limit: 10,
+    },
+});
+
+// ▼ 追加: Vegas.js形式に変換
+const vegasImages = sliderResponse.contents.map((content) => ({
+    // @ts-ignore
+    src: content.top_image.url,
+}));
 ---
 
 <Layout title="FRESHMAN">
@@ -51,10 +78,9 @@ import Layout from "../layouts/Layout.astro";
 
     <main id="main-area">
         <section id="service">
-            <h2 class="js_typing">
-                <div class="command">Congratulations on entering school!</div>
+            <h2 class="freshman-message">
+                <span id="typing-text"></span><span class="cursor">|</span>
             </h2>
-
             <div class="main-info">
                 <p>
                     モダンフォークソングクラブは音楽団体の中で一番歴史が長い団体です。モダンフォークと名前がついていますが、<br
@@ -98,11 +124,45 @@ import Layout from "../layouts/Layout.astro";
         </section>
     </main>
 
+    <script is:inline define:vars={{ vegasImages }}>
+        // jQuery ($) を使わず、純粋なJSでロード完了を待ちます
+        window.addEventListener("load", function () {
+            // ロード完了後、jQueryが使えるかチェック
+            if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
+                console.error("Vegas or jQuery not loaded");
+                return;
+            }
+
+            // デフォルト画像（取得できなかった場合のフォールバック）
+            const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
+
+            // microCMSの画像があればそれを使い、なければデフォルトを使う
+            const finalImages =
+                vegasImages.length > 0 ? vegasImages : defaultImages;
+
+            // Vegasを開始
+            $("#slider").vegas({
+                overlay: false,
+                transition: "blur",
+                transitionDuration: 2000,
+                delay: 10000,
+                animationDuration: 20000,
+                animation: "kenburns",
+                slides: finalImages,
+            });
+        });
+    </script>
+
     <style>
         /* 追加のCSSが必要な場合はここに書きますが、
        今回は main.css のクラス（pc, sp, main-infoなど）をそのまま使うので
        特に追加はありません。 */
 
+        /* ▼▼▼ 追加：タイピングの文字もライトモード時は黒にする ▼▼▼ */
+        :global(body.light-mode) .freshman-message,
+        :global(body.light) .freshman-message {
+            color: #333; /* これで白背景でも見えます */
+        }
         .main-info {
             padding: 0 20px;
             max-width: 1000px;
@@ -112,10 +172,96 @@ import Layout from "../layouts/Layout.astro";
             line-height: 2;
         }
 
+        /* ▼▼▼ 修正：ライトモード時は文字を黒くし、背景に薄いグレーをつける ▼▼▼ */
+        :global(body.light-mode) .main-info,
+        :global(body.light) .main-info {
+            color: #333; /* 文字は黒 */
+            background-color: #f5f5f5; /* 背景を薄いグレーに（お好みで #eee などに変更可） */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* うっすら影をつけて浮き上がらせる */
+        }
+
         .main-info img {
             width: 100%;
             height: auto;
             margin-bottom: 20px;
+        }
+    </style>
+
+    <script is:inline>
+        document.addEventListener("DOMContentLoaded", () => {
+            const text = "Congratulations on entering school!"; // 表示したい文字
+            const target = document.getElementById("typing-text");
+            const speed = 100; // 打つスピード（ミリ秒）
+
+            let i = 0;
+            const typeWriter = () => {
+                if (i < text.length) {
+                    target.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, speed);
+                }
+            };
+
+            // 画面に表示されたら開始するための監視設定（IntersectionObserver）
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        // 見えたらタイピング開始
+                        target.textContent = ""; // リセット
+                        i = 0;
+                        typeWriter();
+                        observer.unobserve(entry.target); // 一回だけ実行
+                    }
+                });
+            });
+
+            // 監視開始
+            const section = document.querySelector(".freshman-message");
+            if (section) {
+                observer.observe(section);
+            } else {
+                // 万が一要素が見つからない場合は即実行
+                typeWriter();
+            }
+        });
+    </script>
+
+    <style>
+        .freshman-message {
+            font-family:
+                "Courier New", Courier, monospace; /* タイプライターっぽいフォント */
+            font-size: 2rem; /* お好みで調整 */
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 40px;
+            color: #fff;
+            min-height: 1.2em; /* ガタつき防止 */
+        }
+
+        /* 点滅するカーソル */
+        .cursor {
+            display: inline-block;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            font-weight: normal;
+        }
+
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* スマホ調整 */
+        @media (max-width: 768px) {
+            .freshman-message {
+                font-size: 1.5rem; /* スマホでは少し小さく */
+                line-height: 1.4;
+            }
         }
     </style>
 </Layout>
