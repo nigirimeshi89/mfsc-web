@@ -64,7 +64,15 @@ const sortedYears = Object.keys(groupedGalleries)
 
 const formatDate = (dateString: string) => {
     const d = new Date(dateString);
-    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+    // タイムゾーンを日本に固定して文字列化し、スラッシュをドットに置換
+    return d
+        .toLocaleDateString("ja-JP", {
+            timeZone: "Asia/Tokyo",
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+        })
+        .replace(/\//g, ".");
 };
 ---
 
