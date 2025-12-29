@@ -40,7 +40,6 @@ type Gallery = {
 
 // ▼ 3. 詳細ページ生成
 export async function getStaticPaths() {
-    // 共通のclientを使って取得
     const response = await client.get<MicroCMSListResponse<Gallery>>({
         endpoint: "galleries",
         queries: { limit: 100 },
@@ -58,7 +57,7 @@ interface Props {
 
 const { gallery } = Astro.props;
 
-// ▼▼▼ 修正: 日付を強制的に日本時間で計算してズレを防止 ▼▼▼
+// 日付のズレ補正（日本時間）
 const d = new Date(gallery.date);
 const formattedDate = d
     .toLocaleDateString("ja-JP", {
@@ -68,7 +67,6 @@ const formattedDate = d
         day: "numeric",
     })
     .replace(/\//g, ".");
-// ▲▲▲ 修正ここまで ▲▲▲
 ---
 
 <Layout title={gallery.title} isLimited={true}>
@@ -123,19 +121,21 @@ const formattedDate = d
             <h2 class="js_typing">{gallery.title}</h2>
 
             <div class="gallery-container">
-                {/* 画像がある場合のみ表示 */}
                 {
                     gallery.images && gallery.images.length > 0 ? (
                         <ul class="gallery-grid">
                             {gallery.images.map((item) => (
                                 <li>
                                     <a
-                                        href={item.url}
+                                        href={item.url + "?w=1200&q=90&fm=webp"}
                                         data-lightbox="gallery"
                                         data-title={gallery.title}
                                     >
                                         <img
-                                            src={item.url}
+                                            src={
+                                                item.url +
+                                                "?w=500&h=500&fit=crop&q=70&fm=webp"
+                                            }
                                             alt="Gallery Image"
                                             loading="lazy"
                                         />
@@ -165,10 +165,7 @@ const formattedDate = d
                 console.error("Vegas or jQuery not loaded");
                 return;
             }
-
-            // 限定用画像が1枚もなかった場合のデフォルト画像
             const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
-
             const finalImages =
                 vegasImages.length > 0 ? vegasImages : defaultImages;
 
@@ -185,56 +182,44 @@ const formattedDate = d
     </script>
 
     <style>
-        /* === ギャラリーグリッドのデザイン === */
         .gallery-container {
             max-width: 1000px;
             margin: 0 auto 50px auto;
             padding: 0 20px;
         }
-
         .gallery-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px; /* 画像同士の隙間 */
+            gap: 10px;
             justify-content: center;
             list-style: none;
             padding: 0;
         }
-
         .gallery-grid li {
             width: calc(33.333% - 10px);
-            /* 3列表示 */
             aspect-ratio: 1 / 1;
-            /* 正方形にトリミング */
             overflow: hidden;
             position: relative;
         }
-
         .gallery-grid li a {
             display: block;
             width: 100%;
             height: 100%;
             transition: opacity 0.3s;
         }
-
         .gallery-grid li a:hover {
             opacity: 0.7;
         }
-
         .gallery-grid img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 枠いっぱいに広げる */
+            object-fit: cover;
             display: block;
         }
-
-        /* 戻るボタン周り */
         .back-btn-area {
             text-align: center;
             margin: 60px 0;
         }
-
-        /* ボタンデザイン */
         .btn04 {
             display: inline-block;
             color: #fff;
@@ -248,8 +233,6 @@ const formattedDate = d
             background: #fff;
             color: #333;
         }
-
-        /* ▼▼▼ 追加：ライトモード時のボタン色修正 ▼▼▼ */
         :global(body.light-mode) .btn04,
         :global(body.light) .btn04 {
             color: #333;
@@ -260,13 +243,9 @@ const formattedDate = d
             background: #333;
             color: #fff;
         }
-        /* ▲▲▲ 追加ここまで ▲▲▲ */
-
-        /* === スマホ対応 === */
         @media (max-width: 768px) {
             .gallery-grid li {
                 width: calc(50% - 10px);
-                /* スマホは2列 */
             }
         }
     </style>
