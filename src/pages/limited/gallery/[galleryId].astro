@@ -58,9 +58,17 @@ interface Props {
 
 const { gallery } = Astro.props;
 
-// 日付のフォーマット
+// ▼▼▼ 修正: 日付を強制的に日本時間で計算してズレを防止 ▼▼▼
 const d = new Date(gallery.date);
-const formattedDate = `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+const formattedDate = d
+    .toLocaleDateString("ja-JP", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+    })
+    .replace(/\//g, ".");
+// ▲▲▲ 修正ここまで ▲▲▲
 ---
 
 <Layout title={gallery.title} isLimited={true}>
