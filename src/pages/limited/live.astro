@@ -1,28 +1,26 @@
 ---
 // src/pages/limited/live.astro
 import Layout from "../../layouts/Layout.astro";
-// 作った共通ファイルを読み込むだけ！
-import { client } from "../../lib/microcms"; // ※階層に合わせて ../ の数を調整
+import { client } from "../../lib/microcms";
 import type { MicroCMSListResponse } from "../../lib/microcms";
 
-// ▼ 追加: 限定用スライドショー画像の型定義
-// (既存のNews型と名前が被らないように SliderNews としています)
+// ▼ 限定用スライドショー画像の型定義
 type SliderNews = {
     id: string;
     top_image_isLimited?: { url: string };
 };
 
-// ▼ 追加: 限定用画像(top_image_isLimited)を取得
+// ▼ 限定用画像(top_image_isLimited)を取得
 const sliderResponse = await client.get<MicroCMSListResponse<SliderNews>>({
     endpoint: "news",
     queries: {
-        fields: ["top_image_isLimited"], // 限定用フィールドを指定
-        filters: "top_image_isLimited[exists]", // 画像がある記事だけ
+        fields: ["top_image_isLimited"],
+        filters: "top_image_isLimited[exists]",
         limit: 10,
     },
 });
 
-// ▼ 追加: Vegas.js形式に変換
+// ▼ Vegas.js形式に変換
 const vegasImages = sliderResponse.contents.map((content) => ({
     // @ts-ignore
     src: content.top_image_isLimited.url,
@@ -37,20 +35,25 @@ type Live = {
 };
 
 const response = await client.get<MicroCMSListResponse<Live>>({
-    endpoint: "live_info", // ★ご自身のエンドポイント名に合わせてください
+    endpoint: "live_info",
     queries: {
         limit: 100,
         orders: "-date",
     },
 });
 
-// 年度ごとのグループ分け処理
+// ▼▼▼ 修正: 年度ごとのグループ分け処理（日本時間で計算） ▼▼▼
 const groupedLives: Record<number, Live[]> = {};
 
 response.contents.forEach((live) => {
     const d = new Date(live.date);
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
+    // サーバーの時差対策：一度日本時間の文字列にしてから再度Date化して年月を取得
+    const jstDate = new Date(
+        d.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }),
+    );
+
+    const year = jstDate.getFullYear();
+    const month = jstDate.getMonth() + 1;
     const fiscalYear = month < 4 ? year - 1 : year;
 
     if (!groupedLives[fiscalYear]) {
@@ -58,15 +61,25 @@ response.contents.forEach((live) => {
     }
     groupedLives[fiscalYear].push(live);
 });
+// ▲▲▲ 修正ここまで ▲▲▲
 
 const sortedYears = Object.keys(groupedLives)
     .map(Number)
     .sort((a, b) => b - a);
 
+// ▼▼▼ 修正: 日付表示用関数（日本時間固定） ▼▼▼
 const formatDate = (dateString: string) => {
     const d = new Date(dateString);
-    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+    return d
+        .toLocaleDateString("ja-JP", {
+            timeZone: "Asia/Tokyo",
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+        })
+        .replace(/\//g, ".");
 };
+// ▲▲▲ 修正ここまで ▲▲▲
 ---
 
 <Layout title="LIVE ARCHIVE | MFSC Limited" isLimited={true}>
@@ -170,16 +183,15 @@ const formatDate = (dateString: string) => {
                 return;
             }
 
-            // 限定用画像が1枚もなかった場合のデフォルト画像（お好きな画像パスに変えてください）
+            // 限定用画像が1枚もなかった場合のデフォルト画像
             const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
-
             // 画像があればそれを使い、なければデフォルトを使う
             const finalImages =
                 vegasImages.length > 0 ? vegasImages : defaultImages;
 
             // Vegasを開始
             $("#slider").vegas({
-                overlay: false, // 網掛けオーバーレイ（必要なら true などのパスを指定）
+                overlay: false,
                 transition: "blur",
                 transitionDuration: 2000,
                 delay: 10000,
@@ -201,7 +213,8 @@ const formatDate = (dateString: string) => {
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
-            color: #b22222; /* ★赤系 */
+            color: #b22222;
+            /* ★赤系 */
             font-family: "Oswald", sans-serif;
             transition:
                 color 0.3s,
@@ -209,14 +222,14 @@ const formatDate = (dateString: string) => {
         }
 
         /* ▼▼▼ ライトモード時の上書き設定（青系にする） ▼▼▼ */
-        /* bodyタグに light-mode, light, is-light などのクラスがついた時に発動 */
         :global(body.light-mode) .year-title,
         :global(body.light) .year-title,
         :global(body.is-light) .year-title {
-            color: #0066cc; /* ★青系 */
-            border-color: #0066cc; /* 線も青くする */
+            color: #0066cc;
+            /* ★青系 */
+            border-color: #0066cc;
+            /* 線も青くする */
         }
-        /* ▲▲▲ 設定ここまで ▲▲▲ */
 
         .live-list {
             max-width: 800px;
@@ -238,7 +251,7 @@ const formatDate = (dateString: string) => {
             background-color: rgba(178, 34, 34, 0.05);
             border-color: #b22222;
         }
-        /* ライトモード時のホバー色も青っぽく変えたい場合はここも調整 */
+        /* ライトモード時のホバー色 */
         :global(body.light-mode) .live-item:hover,
         :global(body.light) .live-item:hover {
             background-color: rgba(0, 102, 204, 0.05);
@@ -254,8 +267,6 @@ const formatDate = (dateString: string) => {
             text-decoration: none;
             width: 100%;
         }
-        /* テキスト色は基本黒(#333)ですが、ダークモードで白文字に反転させる処理は
-           Layout.astroやglobal.cssで管理されている想定です */
 
         .live-info {
             display: flex;
@@ -281,7 +292,7 @@ const formatDate = (dateString: string) => {
         }
         :global(body.light-mode) .live-item:hover .live-title,
         :global(body.light) .live-item:hover .live-title {
-            color: #0066cc; /* ライトモードなら青く光る */
+            color: #0066cc;
         }
 
         .arrow {

@@ -1,7 +1,6 @@
 ---
 // src/pages/limited/live/[liveId].astro
 import Layout from "../../../layouts/Layout.astro";
-// ▼ 修正: 共通のclientを使うように変更
 import { client } from "../../../lib/microcms";
 import type { MicroCMSListResponse } from "../../../lib/microcms";
 
@@ -51,10 +50,19 @@ interface Props {
 
 const { live } = Astro.props;
 
+// ▼▼▼ 修正: 日付表示用関数（日本時間固定） ▼▼▼
 const formatDate = (dateString: string) => {
     const d = new Date(dateString);
-    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+    return d
+        .toLocaleDateString("ja-JP", {
+            timeZone: "Asia/Tokyo",
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+        })
+        .replace(/\//g, ".");
 };
+// ▲▲▲ 修正ここまで ▲▲▲
 ---
 
 <Layout title={`${live.title} | Live Archive`} isLimited={true}>
