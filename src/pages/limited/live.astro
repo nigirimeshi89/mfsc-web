@@ -42,12 +42,10 @@ const response = await client.get<MicroCMSListResponse<Live>>({
     },
 });
 
-// ▼▼▼ 修正: 年度ごとのグループ分け処理（日本時間で計算） ▼▼▼
+// ▼ 年度ごとのグループ分け処理（日本時間で計算）
 const groupedLives: Record<number, Live[]> = {};
-
 response.contents.forEach((live) => {
     const d = new Date(live.date);
-    // サーバーの時差対策：一度日本時間の文字列にしてから再度Date化して年月を取得
     const jstDate = new Date(
         d.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }),
     );
@@ -61,13 +59,12 @@ response.contents.forEach((live) => {
     }
     groupedLives[fiscalYear].push(live);
 });
-// ▲▲▲ 修正ここまで ▲▲▲
 
 const sortedYears = Object.keys(groupedLives)
     .map(Number)
     .sort((a, b) => b - a);
 
-// ▼▼▼ 修正: 日付表示用関数（日本時間固定） ▼▼▼
+// ▼ 日付表示用関数
 const formatDate = (dateString: string) => {
     const d = new Date(dateString);
     return d
@@ -79,7 +76,6 @@ const formatDate = (dateString: string) => {
         })
         .replace(/\//g, ".");
 };
-// ▲▲▲ 修正ここまで ▲▲▲
 ---
 
 <Layout title="LIMITED_LIVE" isLimited={true}>
@@ -139,42 +135,91 @@ const formatDate = (dateString: string) => {
             </p>
 
             <section class="details-wrapper">
-                <div class="corner-title">
-                    {
-                        sortedYears.map((year) => (
-                            <div class="year-section">
-                                {/* 年度の見出し */}
-                                <h3 class="js_typing year-title">{year}年度</h3>
+                <div class="live-archive-container">
+                    {/* ▼▼▼ 追加: タブ切り替えボタン ▼▼▼ */}
+                    <ul class="year-tabs">
+                        {
+                            sortedYears.map((year, index) => (
+                                <li
+                                    class={`tab-item ${index === 0 ? "active" : ""}`}
+                                    data-target={`year-${year}`}
+                                >
+                                    {year}年度
+                                </li>
+                            ))
+                        }
+                    </ul>
 
-                                {/* リスト */}
-                                <ul class="live-list">
-                                    {groupedLives[year].map((live) => (
-                                        <li class="live-item">
-                                            <a
-                                                href={`/limited/live/${live.id}`}
-                                                class="live-link"
-                                            >
-                                                <div class="live-info">
-                                                    <span class="live-date">
-                                                        {formatDate(live.date)}
-                                                    </span>
-                                                    <h3 class="live-title">
-                                                        {live.title}
-                                                    </h3>
-                                                </div>
-                                                <div class="arrow">→</div>
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))
-                    }
+                    {/* ▼▼▼ コンテンツエリア（タブの中身） ▼▼▼ */}
+                    <div class="tab-contents">
+                        {
+                            sortedYears.map((year, index) => (
+                                <div
+                                    id={`year-${year}`}
+                                    class={`year-section ${index === 0 ? "is-show" : ""}`}
+                                >
+                                    {/* リスト */}
+                                    <ul class="live-list">
+                                        {groupedLives[year].map((live) => (
+                                            <li class="live-item">
+                                                <a
+                                                    href={`/limited/live/${live.id}`}
+                                                    class="live-link"
+                                                >
+                                                    <div class="live-info">
+                                                        <span class="live-date">
+                                                            {formatDate(
+                                                                live.date,
+                                                            )}
+                                                        </span>
+                                                        <h3 class="live-title">
+                                                            {live.title}
+                                                        </h3>
+                                                    </div>
+                                                    <div class="arrow">→</div>
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))
+                        }
+                    </div>
                 </div>
             </section>
         </section>
     </main>
 
+    {/* ▼▼▼ タブ切り替え用のスクリプト ▼▼▼ */}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const tabs = document.querySelectorAll(".tab-item");
+            const contents = document.querySelectorAll(".year-section");
+
+            tabs.forEach((tab) => {
+                tab.addEventListener("click", () => {
+                    // 1. すべてのタブから active を外す
+                    tabs.forEach((t) => t.classList.remove("active"));
+                    // 2. クリックされたタブに active をつける
+                    tab.classList.add("active");
+
+                    // 3. すべてのコンテンツを非表示にする
+                    contents.forEach((c) => c.classList.remove("is-show"));
+
+                    // 4. 対応するコンテンツだけ表示する
+                    const targetId = tab.getAttribute("data-target");
+                    if (targetId) {
+                        const targetContent = document.getElementById(targetId);
+                        if (targetContent) {
+                            targetContent.classList.add("is-show");
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+
+    {/* ▼▼▼ Vegas用のスクリプト ▼▼▼ */}
     <script is:inline define:vars={{ vegasImages }}>
         window.addEventListener("load", function () {
             // jQueryとVegasが読み込まれているかチェック
@@ -203,39 +248,98 @@ const formatDate = (dateString: string) => {
     </script>
 
     <style>
-        /* 年度見出し（デフォルト：ダークモード用・赤） */
-        .year-title {
-            font-size: 1.5rem;
-            margin: 50px 0 20px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-            width: 100%;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            color: #b22222;
-            /* ★赤系 */
-            font-family: "Oswald", sans-serif;
-            transition:
-                color 0.3s,
-                border-color 0.3s;
-        }
-
-        /* ▼▼▼ ライトモード時の上書き設定（青系にする） ▼▼▼ */
-        :global(body.light-mode) .year-title,
-        :global(body.light) .year-title,
-        :global(body.is-light) .year-title {
-            color: #0066cc;
-            /* ★青系 */
-            border-color: #0066cc;
-            /* 線も青くする */
-        }
-
-        .live-list {
+        .live-archive-container {
             max-width: 800px;
             margin: 0 auto;
+        }
+
+        /* ▼▼▼ タブデザイン（スクショ風） ▼▼▼ */
+        .year-tabs {
+            display: flex;
+            justify-content: flex-start; /* 左寄せ */
+            flex-wrap: wrap;
+            list-style: none;
+            padding: 0;
+            margin: 0 0 30px 0;
+            border-bottom: 1px solid #333; /* タブの下線 */
+        }
+
+        .tab-item {
+            padding: 10px 20px;
+            background: #333; /* 非アクティブ時の背景 */
+            color: #aaa; /* 非アクティブ時の文字色 */
+            cursor: pointer;
+            margin-right: 2px;
+            font-family: "Oswald", sans-serif;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            border-top: 1px solid transparent;
+            border-left: 1px solid transparent;
+            border-right: 1px solid transparent;
+        }
+
+        .tab-item:hover {
+            background: #444;
+            color: #fff;
+        }
+
+        /* アクティブなタブ */
+        .tab-item.active {
+            background: #000; /* アクティブ時の背景 */
+            color: #fff; /* アクティブ時の文字色 */
+            border-color: #555; /* 枠線 */
+            border-bottom: 1px solid #000; /* 下線を消してコンテンツと繋げる */
+            margin-bottom: -1px; /* 下線の上に被せる */
+        }
+
+        /* ライトモード対応：タブ */
+        :global(body.light-mode) .year-tabs,
+        :global(body.light) .year-tabs {
+            border-bottom-color: #ccc;
+        }
+        :global(body.light-mode) .tab-item,
+        :global(body.light) .tab-item {
+            background: #eee;
+            color: #666;
+        }
+        :global(body.light-mode) .tab-item:hover,
+        :global(body.light) .tab-item:hover {
+            background: #ddd;
+        }
+        :global(body.light-mode) .tab-item.active,
+        :global(body.light) .tab-item.active {
+            background: #fff;
+            color: #0066cc;
+            border-color: #ccc;
+            border-bottom-color: #fff;
+        }
+
+        /* ▼▼▼ コンテンツ切り替え ▼▼▼ */
+        .year-section {
+            display: none; /* デフォルトは非表示 */
+            animation: fadeIn 0.5s ease;
+        }
+
+        .year-section.is-show {
+            display: block; /* is-showがついたら表示 */
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ▼▼▼ リストデザイン（既存維持） ▼▼▼ */
+        .live-list {
             padding: 0;
             list-style: none;
+            margin: 0;
         }
 
         .live-item {
@@ -318,6 +422,11 @@ const formatDate = (dateString: string) => {
             }
             .live-title {
                 font-size: 1rem;
+            }
+            /* スマホのときはタブを少し小さく */
+            .tab-item {
+                padding: 8px 15px;
+                font-size: 0.9rem;
             }
         }
     </style>
