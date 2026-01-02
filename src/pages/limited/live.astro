@@ -20,11 +20,13 @@ const sliderResponse = await client.get<MicroCMSListResponse<SliderNews>>({
     },
 });
 
-// ▼ Vegas.js形式に変換
-const vegasImages = sliderResponse.contents.map((content) => ({
-    // @ts-ignore
-    src: content.top_image_isLimited.url,
-}));
+// ▼ 画像データの抽出（安全対策済み）
+const vegasImages = sliderResponse.contents
+    .map((content) => ({
+        // @ts-ignore
+        src: content.top_image_isLimited?.url,
+    }))
+    .filter((img) => img.src);
 
 type Live = {
     id: string;
@@ -42,7 +44,7 @@ const response = await client.get<MicroCMSListResponse<Live>>({
     },
 });
 
-// ▼ 年度ごとのグループ分け処理（日本時間で計算）
+// ▼ 年度ごとのグループ分け処理
 const groupedLives: Record<number, Live[]> = {};
 response.contents.forEach((live) => {
     const d = new Date(live.date);
@@ -136,7 +138,7 @@ const formatDate = (dateString: string) => {
 
             <section class="details-wrapper">
                 <div class="live-archive-container">
-                    {/* ▼▼▼ 追加: タブ切り替えボタン ▼▼▼ */}
+                    {/* ▼▼▼ タブ切り替えボタン ▼▼▼ */}
                     <ul class="year-tabs">
                         {
                             sortedYears.map((year, index) => (
@@ -150,7 +152,7 @@ const formatDate = (dateString: string) => {
                         }
                     </ul>
 
-                    {/* ▼▼▼ コンテンツエリア（タブの中身） ▼▼▼ */}
+                    {/* ▼▼▼ コンテンツエリア ▼▼▼ */}
                     <div class="tab-contents">
                         {
                             sortedYears.map((year, index) => (
@@ -158,7 +160,6 @@ const formatDate = (dateString: string) => {
                                     id={`year-${year}`}
                                     class={`year-section ${index === 0 ? "is-show" : ""}`}
                                 >
-                                    {/* リスト */}
                                     <ul class="live-list">
                                         {groupedLives[year].map((live) => (
                                             <li class="live-item">
@@ -190,7 +191,7 @@ const formatDate = (dateString: string) => {
         </section>
     </main>
 
-    {/* ▼▼▼ タブ切り替え用のスクリプト ▼▼▼ */}
+    {/* ▼▼▼ スクリプト群 ▼▼▼ */}
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const tabs = document.querySelectorAll(".tab-item");
@@ -198,15 +199,11 @@ const formatDate = (dateString: string) => {
 
             tabs.forEach((tab) => {
                 tab.addEventListener("click", () => {
-                    // 1. すべてのタブから active を外す
                     tabs.forEach((t) => t.classList.remove("active"));
-                    // 2. クリックされたタブに active をつける
                     tab.classList.add("active");
 
-                    // 3. すべてのコンテンツを非表示にする
                     contents.forEach((c) => c.classList.remove("is-show"));
 
-                    // 4. 対応するコンテンツだけ表示する
                     const targetId = tab.getAttribute("data-target");
                     if (targetId) {
                         const targetContent = document.getElementById(targetId);
@@ -219,22 +216,19 @@ const formatDate = (dateString: string) => {
         });
     </script>
 
-    {/* ▼▼▼ Vegas用のスクリプト ▼▼▼ */}
     <script is:inline define:vars={{ vegasImages }}>
         window.addEventListener("load", function () {
-            // jQueryとVegasが読み込まれているかチェック
             if (typeof $ === "undefined" || typeof $.fn.vegas === "undefined") {
                 console.error("Vegas or jQuery not loaded");
                 return;
             }
 
-            // 限定用画像が1枚もなかった場合のデフォルト画像
             const defaultImages = [{ src: "/img/jpg/bg_main_01.jpg" }];
-            // 画像があればそれを使い、なければデフォルトを使う
             const finalImages =
-                vegasImages.length > 0 ? vegasImages : defaultImages;
+                vegasImages && vegasImages.length > 0
+                    ? vegasImages
+                    : defaultImages;
 
-            // Vegasを開始
             $("#slider").vegas({
                 overlay: false,
                 transition: "blur",
@@ -253,21 +247,20 @@ const formatDate = (dateString: string) => {
             margin: 0 auto;
         }
 
-        /* ▼▼▼ タブデザイン（スクショ風） ▼▼▼ */
         .year-tabs {
             display: flex;
-            justify-content: flex-start; /* 左寄せ */
+            justify-content: flex-start;
             flex-wrap: wrap;
             list-style: none;
             padding: 0;
             margin: 0 0 30px 0;
-            border-bottom: 1px solid #333; /* タブの下線 */
+            border-bottom: 1px solid #333;
         }
 
         .tab-item {
             padding: 10px 20px;
-            background: #333; /* 非アクティブ時の背景 */
-            color: #aaa; /* 非アクティブ時の文字色 */
+            background: #333;
+            color: #aaa;
             cursor: pointer;
             margin-right: 2px;
             font-family: "Oswald", sans-serif;
@@ -283,16 +276,14 @@ const formatDate = (dateString: string) => {
             color: #fff;
         }
 
-        /* アクティブなタブ */
         .tab-item.active {
-            background: #000; /* アクティブ時の背景 */
-            color: #fff; /* アクティブ時の文字色 */
-            border-color: #555; /* 枠線 */
-            border-bottom: 1px solid #000; /* 下線を消してコンテンツと繋げる */
-            margin-bottom: -1px; /* 下線の上に被せる */
+            background: #000;
+            color: #fff;
+            border-color: #555;
+            border-bottom: 1px solid #000;
+            margin-bottom: -1px;
         }
 
-        /* ライトモード対応：タブ */
         :global(body.light-mode) .year-tabs,
         :global(body.light) .year-tabs {
             border-bottom-color: #ccc;
@@ -314,14 +305,13 @@ const formatDate = (dateString: string) => {
             border-bottom-color: #fff;
         }
 
-        /* ▼▼▼ コンテンツ切り替え ▼▼▼ */
         .year-section {
-            display: none; /* デフォルトは非表示 */
+            display: none;
             animation: fadeIn 0.5s ease;
         }
 
         .year-section.is-show {
-            display: block; /* is-showがついたら表示 */
+            display: block;
         }
 
         @keyframes fadeIn {
@@ -335,7 +325,6 @@ const formatDate = (dateString: string) => {
             }
         }
 
-        /* ▼▼▼ リストデザイン（既存維持） ▼▼▼ */
         .live-list {
             padding: 0;
             list-style: none;
@@ -355,7 +344,6 @@ const formatDate = (dateString: string) => {
             background-color: rgba(178, 34, 34, 0.05);
             border-color: #b22222;
         }
-        /* ライトモード時のホバー色 */
         :global(body.light-mode) .live-item:hover,
         :global(body.light) .live-item:hover {
             background-color: rgba(0, 102, 204, 0.05);
@@ -423,7 +411,6 @@ const formatDate = (dateString: string) => {
             .live-title {
                 font-size: 1rem;
             }
-            /* スマホのときはタブを少し小さく */
             .tab-item {
                 padding: 8px 15px;
                 font-size: 0.9rem;
